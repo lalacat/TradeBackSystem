@@ -109,5 +109,4 @@ class EventEngine(object):
 
     def put_data(self,ts_code):
         self._queue.put(ts_code)
-a = EventEngine()
 
