@@ -78,6 +78,8 @@ class Exchange(Enum):
     Exchange.
     """
     # Chinese
+    SH = 'SH'
+    SZ = 'SZ'
     CFFEX = "CFFEX"
     SHFE = "SHFE"
     CZCE = "CZCE"

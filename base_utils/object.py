@@ -10,7 +10,7 @@ from .constant import Direction, Exchange, Interval, Offset, Status, Product, Op
 
 ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED])
 
-
+# @dataclass 装饰器可以帮你生成 __repr__ __init__ 等等方法
 @dataclass
 class BaseData:
     """
