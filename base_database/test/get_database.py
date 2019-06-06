@@ -19,5 +19,16 @@ init('a',s)
 # names  = c._get_collection_name()
 # print(names)
 
-b = Task_anshan.objects(community_name='鞍山一村')
-print(b[0].to_print())
+# b = Task_anshan.objects(community_name='鞍山一村')
+# print(b[0].to_print())
+
+# 更改表名
+# a = Test(
+#     sold_unitPrice='10000',
+#     sold_address = '20000',
+#     community_name = 'Test'
+#          )
+# # a._set_name('Test_B')
+# a.save()
+
+t = Test()

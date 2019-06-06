@@ -3,7 +3,7 @@
 #  D
 #  DATABASE
 DATABASE_DRIVER = 'mongodb'
-DATABASE_DATABASE = "LianJia"  # for sqlite, use this as filepath
+DATABASE_DATABASE = "test"  # for sqlite, use this as filepath
 # DATABASE_HOST = "47.105.165.81"
 DATABASE_HOST = "127.0.0.1"
 

@@ -361,9 +361,8 @@ class MongoManager(BaseDatabaseManager):
         DbBarData.objects(symbol=symbol).delete()
 
 
-
-
 class Test(Document):
+
     sold_unitPrice:str = StringField()
     sold_address:str = StringField()
     community_name:str = StringField()
@@ -372,6 +371,19 @@ class Test(Document):
     # sold_saleonborad:str = ListField()
     # sold_positionInfo:str = ListField()
     # sold_dealcycle:str = ListField()
+
+    meta = {
+    }
+    # @staticmethod
+    def _set_name(self,name):
+        # t = Test()
+        self._meta['collection'] = name
+        # t.sold_unitPrice = '1000'
+        # t.community_name = 'Lala'
+        # t.community_name = 'Bibi'
+
+
+
 
 
 class Task_anshan(Document):

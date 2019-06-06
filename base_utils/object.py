@@ -96,6 +96,9 @@ class BarData(BaseData):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
 
+    def __repr__(self):
+        return f"{self.symbol}.{self.exchange.value}: {self.datetime.strftime('%Y%m%d')}"
+    __str__ = __repr__
 
 @dataclass
 class OrderData(BaseData):
