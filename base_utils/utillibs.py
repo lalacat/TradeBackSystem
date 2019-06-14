@@ -6,3 +6,11 @@ def arglist_to_dict(arglist):
     :return: 返回一个dict
     """
     return dict(x.split('=',1) for x in arglist)
+
+
+def round_to_pricetick(price: float, pricetick: float):
+    """
+    Round price to price tick value.
+    """
+    rounded = round(price / pricetick, 0) * pricetick
+    return rounded

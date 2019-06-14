@@ -47,6 +47,7 @@ def init(_:Driver,settings:Settings):
 通常把这样的一些类都存放在一个脚本中，作为应用的Model模块
 """
 
+
 # 数据结构
 class DbBarData(Document):
     """
@@ -305,6 +306,7 @@ class MongoManager(BaseDatabaseManager):
 
     @staticmethod
     def to_update_param(d):
+        # update需要将更新的变量前增加前缀set__这样才能实现对应变量的更新，更新的变量是不加前缀的
         return {
             "set__" + k: v.value if isinstance(v, Enum) else v
             for k, v in d.__dict__.items()

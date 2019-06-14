@@ -32,12 +32,12 @@ def generate_bar_from_row(row, symbol, exchange):
     return bar
 
 ts_code = '002192.SZ'
-startday = '20190605'
+startday = '20190603'
 # endday= '20190330'
 pro = ts.pro_api(token)
 df = pro.daily(ts_code=ts_code, start_date=startday)
 symbol, exchange = ts_code.split(".")
-
+print(df)
 for _,row in df.iterrows():
     bar = generate_bar_from_row(row,symbol,exchange)
 s = Settings()
@@ -47,5 +47,5 @@ database_manager = init('a',s)
 # print(db_bar)
 # db_bar.save()
 DbBarData.objects(
-    symbol=bar.symbol, interval=bar.interval.value, datetime=bar.datetime
-).update_one(upsert=True)
+    # symbol=bar.symbol, interval=bar.interval.value, datetime=bar.datetime
+).update_one(upsert=True,set__symbol=bar.symbol,set__interval=bar.interval.value,set__datetime=bar.datetime)

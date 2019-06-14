@@ -12,15 +12,16 @@ from base_utils.object import BarData
 from settings.setting import Settings
 
 
-
-
 class DownloadData(object):
 
-    def __init__(self,settings):
+    def __init__(self,settings,database_manager=None):
         self.settings = settings
         self.token = 'bfbf67e56f47ef62e570fc6595d57909f9fc516d3749458e2eb6186a'
-        # self.pro = ts.pro_api(self.token)
-        # self.startday = startday
+        self.pro = ts.pro_api(self.token)
+        if not database_manager:
+            self.database_manager = init('_',self.settings)
+        else:
+            self.database_manager = database_manager
 
     @staticmethod
     def str2datatime(time:str):
@@ -42,47 +43,42 @@ class DownloadData(object):
         )
         return bar
 
-
-    def download_minute_bar(self,vt_symbol,start_date,end_data=None,database_manager=None):
+    def download_day_bar(self,vt_symbol,start_date,end_data=None):
         """下载某一合约的分钟线数据"""
         print(f"开始下载合约数据{vt_symbol}")
         symbol, exchange = vt_symbol.split(".")
 
         start = time()
 
+        if not end_data:
+            end_data = start_date
+
         df = self.pro.daily(
             ts_code=vt_symbol,
-            start_date='20150101',
-            end_date='20190603')
-
+            start_date=start_date,
+            end_date=end_data
+        )
         df.sort_values(by='trade_date',ascending=True,inplace=True)
 
         bars = []
         for ix, row in df.iterrows():
             bar = self.generate_bar_from_row(row, symbol, exchange)
             bars.append(bar)
-        # return bars
-        database_manager.save_bar_data(bars)
+        self.database_manager.save_bar_data(bars)
 
         end = time()
         cost = (end - start) * 1000
 
-
         print(
-            "合约%s的分钟K线数据下载完成%s - %s，耗时%s毫秒"
-            % (symbol, df['trade_date'][len(df)-1], df['trade_date'][0], cost)
+            "合约%s的分钟K线数据下载完成，耗时%7.2f毫秒"
+            % (symbol, cost)
         )
+
 
 if __name__ == "__main__":
     s = Settings()
-    database_manager = init('a',s)
+    dd = DownloadData(s)
+    dd.download_day_bar('002192.SZ','20180101','20190610')
 
-    download_minute_bar('002192.SZ',database_manager)
 
 
-# def to_update_param(d):
-#     return {
-#         "set__" + k: v.value if isinstance(v, Enum) else v
-#         for k, v in d.__dict__.items()
-#     }
-# bars = download_minute_bar('002192.SZ')
