@@ -70,15 +70,15 @@ class DownloadData(object):
         cost = (end - start) * 1000
 
         print(
-            "合约%s的分钟K线数据下载完成，耗时%7.2f毫秒"
-            % (symbol, cost)
+            "合约%s的K线数据下载完成共%d，耗时%7.2f毫秒"
+            % (symbol, len(df),cost)
         )
 
 
 if __name__ == "__main__":
     s = Settings()
     dd = DownloadData(s)
-    dd.download_day_bar('002192.SZ','20180101','20190610')
+    dd.download_day_bar('002192.SZ','20190618','20190813')
 
 
 

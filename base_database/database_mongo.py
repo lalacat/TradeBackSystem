@@ -63,6 +63,7 @@ class DbBarData(Document):
 
     volume: float = FloatField()
     open_price: float = FloatField()
+    open_interest: float = FloatField()
     high_price: float = FloatField()
     low_price: float = FloatField()
     close_price: float = FloatField()
@@ -96,6 +97,7 @@ class DbBarData(Document):
         db_bar.high_price = bar.high_price
         db_bar.low_price = bar.low_price
         db_bar.close_price = bar.close_price
+        db_bar.open_interest = bar.open_interest
 
         return db_bar
 
@@ -110,6 +112,7 @@ class DbBarData(Document):
             interval=Interval(self.interval),
             volume=self.volume,
             open_price=self.open_price,
+            open_interest=self.open_interest,
             high_price=self.high_price,
             low_price=self.low_price,
             close_price=self.close_price,

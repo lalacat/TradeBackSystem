@@ -36,7 +36,7 @@ class CtaTemplate(ABC):
         self.variables.insert(1, "trading")
         self.variables.insert(2, "pos")
 
-        self.update_setting(setting)
+        # self.update_setting(setting)
 
     def update_setting(self, setting: dict):
         """
@@ -182,7 +182,7 @@ class CtaTemplate(ABC):
         """
         if self.trading:
             vt_orderids = self.cta_engine.send_order(
-                self, direction, offset, price, volume, stop, lock
+                 direction, offset, price, volume, stop, lock
             )
             return vt_orderids
         else:

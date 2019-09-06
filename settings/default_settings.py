@@ -22,3 +22,7 @@ EVENT_POSITION = "ePosition."
 EVENT_ACCOUNT = "eAccount."
 EVENT_CONTRACT = "eContract."
 EVENT_LOG = "eLog"
+
+# F
+FONT_FAMILY= "Arial"
+FONT_SIZE = 12

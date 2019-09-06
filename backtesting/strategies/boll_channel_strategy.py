@@ -1,17 +1,17 @@
-# from vnpy.app.cta_strategy import (
-#     CtaTemplate,
-#     StopOrder,
-#     TickData,
-#     BarData,
-#     TradeData,
-#     OrderData,
-#     BarGenerator,
-#     ArrayManager,
-# )
+
+from collections import defaultdict
+from datetime import datetime
+
 from backtesting.template import CtaTemplate
 from base_utils.base import StopOrder
 from base_utils.object import TickData, BarData, OrderData, TradeData
 from base_utils.utility import BarGenerator, ArrayManager
+
+import pyqtgraph as pg
+
+from chart import ChartWidget, CandleItem
+from settings.setting import Settings
+from ui import create_qapp
 
 
 class BollChannelStrategy(CtaTemplate):
@@ -46,11 +46,18 @@ class BollChannelStrategy(CtaTemplate):
         super(BollChannelStrategy, self).__init__(
             cta_engine, strategy_name, vt_symbol, setting
         )
-
-        self.bg = BarGenerator(self.on_bar, 15, self.on_15min_bar)
+        s = Settings()
+        self.app = create_qapp(s)
         self.am = ArrayManager()
+        self.addition_line = defaultdict(dict)
+        self.ups={}
+        self.downs={}
+        self.mids={}
+        self.mids={}
+        self.bars=list()
+        self.bar_opens=[]
 
-    def on_init(self):
+    def on_init(self,size=None):
         """
         Callback when strategy is inited.
         """
@@ -67,7 +74,26 @@ class BollChannelStrategy(CtaTemplate):
         """
         Callback when strategy is stopped.
         """
-        self.write_log("策略停止")
+        print("策略停止")
+        self.addition_line['up'] = self.ups
+        self.addition_line['down'] = self.downs
+        self.addition_line['mid'] = self.mids
+        widget = ChartWidget()
+        widget.add_plot("candle", hide_x_axis=False)
+        widget.add_item(CandleItem, "candle", "candle")
+        widget.add_cursor()
+        # widget.addItem()
+        arrow = pg.ArrowItem(pos=(len(self.bars),40), angle=90, tipAngle=60, headLen=8, tailLen=3, tailWidth=5,
+                             pen={'color': 'w', 'width': 1}, brush='r')
+        widget.update_history(self.bars,self.addition_line)
+        widget.addItem(arrow)
+        widget.show()
+        self.app.exec_()
+
+        # print(self.addition_line)
+
+        # self.write_log("策略停止")
+
 
     def on_tick(self, tick: TickData):
         """
@@ -75,22 +101,28 @@ class BollChannelStrategy(CtaTemplate):
         """
         self.bg.update_tick(tick)
 
-    def on_bar(self, bar: BarData):
-        """
-        Callback of new bar data update.
-        """
-        self.bg.update_bar(bar)
 
-    def on_15min_bar(self, bar: BarData):
-        """"""
+    def on_bar(self,bar,am=None):
+        """
+        在run_backtesting中先初始化定义数量的数据，先在callback，默认on_bar中将数据库中的bar加入到程序中根据需要形成所需要的时间段的bar数据，
+        在bg.update_bar(bar)中调用on_15min_bar方法，对形成新的bar数据加载到dataframe数据中，为后来的数据处理做准备，只有数据全部加载完后am.inited，才会生效，后续的数据计算才会继续进行
+        """
+        # 如果当前交易日没有成交上一个交易日策略生成的价格，则把上个交易日报的单全部取消
         self.cancel_all()
+        self.bars.append(bar)
 
         am = self.am
         am.update_bar(bar)
         if not am.inited:
             return
-
+        # self.bar_opens.append(bar.close_price)
         self.boll_up, self.boll_down = am.boll(self.boll_window, self.boll_dev)
+        self.boll_mid = am.sma(self.boll_window)
+        self.mids[bar.datetime]=self.boll_mid
+        self.ups[bar.datetime] = self.boll_up
+        self.downs[bar.datetime] = self.boll_down
+
+
         self.cci_value = am.cci(self.cci_window)
         self.atr_value = am.atr(self.atr_window)
 
@@ -99,6 +131,7 @@ class BollChannelStrategy(CtaTemplate):
             self.intra_trade_low = bar.low_price
 
             if self.cci_value > 0:
+                # 向engine中send_order
                 self.buy(self.boll_up, self.fixed_size, True)
             elif self.cci_value < 0:
                 self.short(self.boll_down, self.fixed_size, True)
@@ -117,6 +150,7 @@ class BollChannelStrategy(CtaTemplate):
             self.short_stop = self.intra_trade_low + self.atr_value * self.sl_multiplier
             self.cover(self.short_stop, abs(self.pos), True)
 
+
         self.put_event()
 
     def on_order(self, order: OrderData):
@@ -127,8 +161,9 @@ class BollChannelStrategy(CtaTemplate):
 
     def on_trade(self, trade: TradeData):
         """
-        Callback of new trade data update.
+        Callback of new trade datooa update.
         """
+        # print("已成交:%s 此时仓位为:%d手" %(trade.tradeid,self.pos))
         self.put_event()
 
     def on_stop_order(self, stop_order: StopOrder):

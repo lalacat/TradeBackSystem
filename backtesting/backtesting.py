@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Callable
 from itertools import product
 from functools import lru_cache
@@ -7,7 +7,6 @@ import multiprocessing
 
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from pandas import DataFrame
 
 from base_database.initialize import database_manager
@@ -16,7 +15,6 @@ from base_utils.constant import Direction, Status, Interval, Offset, Exchange
 from base_utils.object import OrderData, TradeData, TickData, BarData
 from base_utils.utillibs import round_to_pricetick
 
-# sns.set_style("whitegrid")
 
 
 class OptimizationSetting:
@@ -71,6 +69,42 @@ class OptimizationSetting:
 
         return settings
 
+    def generate_setting_ga(self):
+        """"""
+        settings_ga = []
+        settings = self.generate_setting()
+        for d in settings:
+            param = [tuple(i) for i in d.items()]
+            settings_ga.append(param)
+        return settings_ga
+
+
+@lru_cache(maxsize=10)
+def load_bar_data(
+    symbol: str,
+    exchange: Exchange,
+    interval: Interval,
+    start: datetime,
+    end: datetime
+):
+    """"""
+    return database_manager.load_bar_data(
+        symbol, exchange, interval, start, end
+    )
+
+
+@lru_cache(maxsize=10)
+def load_tick_data(
+    symbol: str,
+    exchange: Exchange,
+    start: datetime,
+    end: datetime
+):
+    """"""
+    return database_manager.load_tick_data(
+        symbol, exchange, start, end
+    )
+
 
 class BacktestingEngine:
     """"""
@@ -101,6 +135,7 @@ class BacktestingEngine:
         self.interval = None
         self.days = 0
         self.callback = None
+        self.data_size = 0
         self.history_data = []
 
         self.stop_order_count = 0
@@ -154,6 +189,7 @@ class BacktestingEngine:
         capital: int = 0,
         end: datetime = None,
         mode: BacktestingMode = BacktestingMode.BAR,
+        days:int=30
     ):
         """"""
         self.mode = mode
@@ -177,6 +213,9 @@ class BacktestingEngine:
         if mode:
             self.mode = mode
 
+        if days:
+            self.days = days
+
     def add_strategy(self, strategy_class: type, setting: dict):
         """"""
         self.strategy_class = strategy_class
@@ -188,21 +227,52 @@ class BacktestingEngine:
         """"""
         self.output("开始加载历史数据")
 
-        if self.mode == BacktestingMode.BAR:
-            self.history_data = load_bar_data(
-                self.symbol,
-                self.exchange,
-                self.interval,
-                self.start,
-                self.end
-            )
-        else:
-            self.history_data = load_tick_data(
-                self.symbol,
-                self.exchange,
-                self.start,
-                self.end
-            )
+        # 测试数据时间上逻辑判断
+        if not self.end:
+            self.end = datetime.now()
+
+        if self.start >= self.end:
+            self.output("起始日期必须小于结束日期")
+            return
+
+        # 清空历史数据
+        self.history_data.clear()       # Clear previously loaded history data
+
+        # 一次性加载30天的数据
+        progress_delta = timedelta(days=30)
+        total_delta = self.end - self.start
+        start = self.start
+        end = self.start + progress_delta
+        progress = 0
+
+        while start < self.end:
+            end = min(end, self.end)  # Make sure end time stays within set range
+
+            if self.mode == BacktestingMode.BAR:
+                data = load_bar_data(
+                    self.symbol,
+                    self.exchange,
+                    self.interval,
+                    start,
+                    end
+                )
+            else:
+                data = load_tick_data(
+                    self.symbol,
+                    self.exchange,
+                    start,
+                    end
+                )
+
+            self.history_data.extend(data)
+
+            progress += progress_delta / total_delta
+            progress = min(progress, 1)
+            progress_bar = "#" * int(progress * 10)
+            self.output(f"加载进度：{progress_bar} [{progress:.0%}]")
+
+            start = end
+            end += progress_delta
 
         self.output(f"历史数据加载完成，数据量：{len(self.history_data)}")
 
@@ -216,16 +286,23 @@ class BacktestingEngine:
         self.strategy.on_init()
 
         # Use the first [days] of history data for initializing strategy
+        # 初始化数据，使用策略设定的days来确定初始化策略使用的历史数据个数
         day_count = 0
+        ix = 0
         for ix, data in enumerate(self.history_data):
             if self.datetime and data.datetime.day != self.datetime.day:
                 day_count += 1
+                # 当加载的bar的个数达到设定的天数时，就跳出读取bar的循环
+                # self.days在load_bar中定义
                 if day_count >= self.days:
                     break
-
             self.datetime = data.datetime
+            # CtaTemplate.cta_engine.load_bar中定义的，
+            # 由策略on_bar()方法决定
             self.callback(data)
 
+        # am = self.strategy.am
+        # print(am.open_array)
         self.strategy.inited = True
         self.output("策略初始化完成")
 
@@ -234,11 +311,14 @@ class BacktestingEngine:
         self.output("开始回放历史数据")
 
         # Use the rest of history data for running backtesting
+        # 使用数据进行模拟交易，运行策略
         for data in self.history_data[ix:]:
             func(data)
 
-        # print(self.daily_results)
+        # print(am.close_array)
+        # print(len(self.daily_results))
         self.output("历史数据回放结束")
+        self.strategy.on_stop()
 
     def calculate_result(self):
         """"""
@@ -530,7 +610,8 @@ class BacktestingEngine:
         """"""
         self.tick = tick
         self.datetime = tick.datetime
-
+        # 在测量处理bar之前，先处理上一个交易日（上一个bar）中策略是否有成交的单子，
+        # 处理完之后，在进行当前交易日的单子
         self.cross_limit_order()
         self.cross_stop_order()
         self.strategy.on_tick(tick)
@@ -613,6 +694,10 @@ class BacktestingEngine:
     def cross_stop_order(self):
         """
         Cross stop order with last bar/tick data.
+        交易逻辑:
+        每次方法进入的时候，保存当前交易日的bar信息，
+        之前bar经过策略生成的stop_order对当前交易的价格进行比较，满足逻辑进行交易，生成trade_order
+        本交易日的bar会继续在后面的方法中进入策略，经过策略的处理，满足策略要求就会在下个交易日中进行交易
         """
         if self.mode == BacktestingMode.BAR:
             long_cross_price = self.bar.high_price
@@ -626,6 +711,8 @@ class BacktestingEngine:
             short_best_price = short_cross_price
 
         for stop_order in list(self.active_stop_orders.values()):
+            # print('当前交易日：%s '%self.datetime)
+            # print("此时活跃的stop_order有：%d"%len(self.active_stop_orders))
             # Check whether stop order can be triggered.
             long_cross = (
                 stop_order.direction == Direction.LONG 
@@ -700,7 +787,9 @@ class BacktestingEngine:
         self, vt_symbol: str, days: int, interval: Interval, callback: Callable
     ):
         """"""
+        # 规定加载bar的个数
         self.days = days
+        # 定义处理bar的方法，都是继承策略
         self.callback = callback
 
     def load_tick(self, vt_symbol: str, days: int, callback: Callable):
@@ -808,6 +897,7 @@ class BacktestingEngine:
     def cancel_all(self, strategy):
         """
         Cancel all orders, both limit and stop.
+        将order的状态改为撤销状态，同时将所有的order移除活跃队列
         """
         vt_orderids = list(self.active_limit_orders.keys())
         for vt_orderid in vt_orderids:
@@ -967,28 +1057,3 @@ def optimize(
     return (str(setting), target_value, statistics)
 
 
-@lru_cache(maxsize=10)
-def load_bar_data(
-    symbol: str,
-    exchange: Exchange,
-    interval: Interval,
-    start: datetime,
-    end: datetime
-):
-    """"""
-    return database_manager.load_bar_data(
-        symbol, exchange, interval, start, end
-    )
-
-
-@lru_cache(maxsize=10)
-def load_tick_data(
-    symbol: str,
-    exchange: Exchange,
-    start: datetime,
-    end: datetime
-):
-    """"""
-    return database_manager.load_tick_data(
-        symbol, exchange, start, end
-    )
