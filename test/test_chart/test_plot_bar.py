@@ -141,11 +141,11 @@ bars = database_manager.load_bar_data(
         end=datetime(2019, 8, 14)
 )
 widget = ChartWidget()
-# widget.add_plot("candle", hide_x_axis=False)
-# widget.add_plot("volume", maximum_height=200)
-# widget.add_item(CandleItem, "candle", "candle")
-# widget.add_item(VolumeItem, "volume", "volume")
-# widget.add_cursor()
+widget.add_plot("candle", hide_x_axis=False)
+widget.add_plot("volume", maximum_height=200)
+widget.add_item(CandleItem, "candle", "candle")
+widget.add_item(VolumeItem, "volume", "volume")
+widget.add_cursor()
 
 
 new_data = bars[:]

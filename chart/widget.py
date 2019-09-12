@@ -4,6 +4,8 @@ from typing import List, Dict, Type
 import pyqtgraph as pg
 
 from PyQt5 import QtWidgets, QtGui,QtCore
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QGraphicsTextItem
 
 from base_utils.object import BarData
 from .manager import BarManager
@@ -49,17 +51,11 @@ class ChartWidget(pg.PlotWidget):
 
         self._layout = pg.GraphicsLayout() # 创建一个网格布局
         self._layout.setContentsMargins(10, 10, 10, 10)
-        self._layout.setSpacing(0)
+        self._layout.setSpacing(0) # 每个item之间的距离
+
         self._layout.setBorder(color=GREY_COLOR, width=0.8)
         self._layout.setZValue(0)
         self.setCentralItem(self._layout)
-        # button_1 = QtWidgets.QPushButton("第一个按钮")
-
-        self.paint = QtGui.QPainter()
-        self.paint.begin(self)
-        self.paint.drawText(10,10,"tttttttttttttttttttttttt")
-
-        self.paint.end()
 
         # 创建水平轴
         self._x_axis = DatetimeAxis(self._manager, orientation='bottom')
@@ -67,8 +63,17 @@ class ChartWidget(pg.PlotWidget):
     def add_cursor(self) -> None:
         """"""
         if not self._cursor:
+            self.info_label = pg.LabelItem()
+            self.info_label.setAttr('size','9pt')
+            # LabelItem本身是不能设置字体的样式，可以通过它的变量item来设置
+            self.info_label.item.setFont(NORMAL_FONT)
+            self.info_label.setAttr('justify', 'left')
+            # self.text_item.setFixedHeight(100)
+            # self.text_item.setFixedWidth(100)
+            self._layout.addItem(self.info_label, row=0, col=0)
             self._cursor = ChartCursor(
-                self, self._manager, self._plots, self._item_plot_map)
+                self, self._manager, self._plots, self._item_plot_map,self.info_label)
+
 
     def add_plot(
         self,
@@ -248,10 +253,10 @@ class ChartWidget(pg.PlotWidget):
         Reimplement this method of parent to update current max_ix value.
         只跟pen绘图有关系
         """
-        # view = self._first_plot.getViewBox()
-        # view_range = view.viewRange()
-        # self._right_ix = max(0, view_range[0][1])
-        # self.viewRect()
+        view = self._first_plot.getViewBox()
+        view_range = view.viewRange()
+        self._right_ix = max(0, view_range[0][1])
+
         super().paintEvent(event)
 
     ########################################################################
@@ -275,6 +280,7 @@ class ChartWidget(pg.PlotWidget):
         Reimplement this method of parent to zoom in/out.
         """
         delta = event.angleDelta()
+
 
         if delta.y() > 0:
             self._on_key_up()
@@ -330,7 +336,7 @@ class ChartWidget(pg.PlotWidget):
         # 导入数据的总个数
         self._right_ix = self._manager.get_count()
         self._update_x_range()
-        # self._cursor.update_info()
+        self._cursor.update_info()
 
 
 class ChartCursor(QtCore.QObject):
@@ -343,7 +349,8 @@ class ChartCursor(QtCore.QObject):
         widget: ChartWidget,
         manager: BarManager,
         plots: Dict[str, pg.GraphicsObject],
-        item_plot_map: Dict[ChartItem, pg.GraphicsObject]
+        item_plot_map: Dict[ChartItem, pg.GraphicsObject],
+        label_item=None
     ):
         """"""
         super().__init__()
@@ -359,6 +366,7 @@ class ChartCursor(QtCore.QObject):
 
         self._init_ui()
         self._connect_signal()
+        self.label_info = label_item
 
     def _init_ui(self):
         """"""
@@ -398,7 +406,7 @@ class ChartCursor(QtCore.QObject):
         for plot_name, plot in self._plots.items():
             label = pg.TextItem(
                 plot_name,
-                # fill=CURSOR_COLOR, color=BLACK_COLOR
+                fill=CURSOR_COLOR, color=BLACK_COLOR
             )
             label.hide()
 
@@ -413,6 +421,7 @@ class ChartCursor(QtCore.QObject):
         self._x_label.hide()
         self._x_label.setZValue(2)
         self._x_label.setFont(NORMAL_FONT)
+        #  将文本框添加到item中
         plot.addItem(self._x_label, ignoreBounds=True)
 
     def _init_info(self) -> None:
@@ -450,12 +459,14 @@ class ChartCursor(QtCore.QObject):
         # First get current mouse point
         # 鼠标的坐标，基于当前界面的大小的位置，与界面的大小有关
         pos = evt
-
+        print('pos:{0}'.format(pos))
         for plot_name, view in self._views.items():
             # 获得界面的长宽，用来判断鼠标是否在界面中
             rect = view.sceneBoundingRect()
+            print('rect:{0}'.format(rect))
             # 判断鼠标的坐标是否在界面内
             if rect.contains(pos):
+                print(plot_name)
                 # 是基于实际的x,y的位置，界面的大小无关
                 mouse_point = view.mapSceneToView(pos)
                 self._x = to_int(mouse_point.x())
@@ -467,7 +478,7 @@ class ChartCursor(QtCore.QObject):
         # Then update cursor component
         self._update_line()
         self._update_label()
-        # self.update_info()
+        self.update_info()
 
     def _update_line(self) -> None:
         """"""
@@ -503,20 +514,6 @@ class ChartCursor(QtCore.QObject):
             # 针对多个item，防止不同的item对应的y轴混淆
             if plot_name == self._plot_name:
                 label.setText(str(self._y))
-                # label.setHtml(
-                #     "<p style='color:white'>"
-                #     "<strong>日期：{0}</strong></p>"
-                #     "<p style='color:white'>开盘：{1}</p>"
-                #     "<p style='color:white'>收盘：{2}</p>"
-                #     "<p style='color:white'>最高价："
-                #     "<span style='color:red;'>{3}</span></p>"
-                #     "<p style='color:white'>最低价："
-                #     "<span style='color:green;'>{4}</span></p>".format(
-                #         self._x, self.data.open_price,
-                #         self.data.close_price,
-                #         self.data.high_price,
-                #         self.data.low_price))
-                # print(view)
                 label.show()
                 # label.setPos(self._x, self._y)
                 label.setPos(bottom_right.x(), self._y)
@@ -529,7 +526,7 @@ class ChartCursor(QtCore.QObject):
             self._x_label.show()
             self._x_label.setPos(self._x, bottom_right.y())
             self._x_label.setAnchor((0, 0))
-
+        # self.label.setText(self._x)
     def update_info(self) -> None:
         """
         更新框里的信息
@@ -548,6 +545,10 @@ class ChartCursor(QtCore.QObject):
 
         for plot_name, plot in self._plots.items():
             plot_info_text = buf[plot]
+            #  text的格式满足css样式
+            self.label_info.setText(plot_info_text)
+            '''
+          
             info = self._infos[plot_name]
             info.setText(plot_info_text)
             info.show()
@@ -555,7 +556,7 @@ class ChartCursor(QtCore.QObject):
             view = self._views[plot_name]
             top_left = view.mapSceneToView(view.sceneBoundingRect().topLeft())
             info.setPos(top_left)
-
+            '''
     def move_right(self) -> None:
         """
         Move cursor index to right by 1.

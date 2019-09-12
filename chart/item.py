@@ -261,37 +261,74 @@ class CandleItem(ChartItem):
         min_price, max_price = self._manager.get_price_range(min_ix, max_ix)
         return min_price, max_price
 
+    # def get_info_text(self, ix: int) -> str:
+    #     """
+    #     Get information text to show by cursor.
+    #     显示在光标上
+    #     """
+    #     bar = self._manager.get_bar(ix)
+    #
+    #     if bar:
+    #         words = [
+    #             "Date",
+    #             bar.datetime.strftime("%Y-%m-%d"),
+    #             "",
+    #             "Time",
+    #             bar.datetime.strftime("%H:%M"),
+    #             "",
+    #             "Open",
+    #             str(bar.open_price),
+    #             "",
+    #             "High",
+    #             str(bar.high_price),
+    #             "",
+    #             "Low",
+    #             str(bar.low_price),
+    #             "",
+    #             "Close",
+    #             str(bar.close_price)
+    #         ]
+    #         text = "\n".join(words)
+    #     else:
+    #         text = ""
+    #
+    #     return text
+
     def get_info_text(self, ix: int) -> str:
-        """
-        Get information text to show by cursor.
-        显示在光标上
-        """
         bar = self._manager.get_bar(ix)
-
-        if bar:
-            words = [
-                "Date",
-                bar.datetime.strftime("%Y-%m-%d"),
-                "",
-                "Time",
-                bar.datetime.strftime("%H:%M"),
-                "",
-                "Open",
-                str(bar.open_price),
-                "",
-                "High",
-                str(bar.high_price),
-                "",
-                "Low",
-                str(bar.low_price),
-                "",
-                "Close",
-                str(bar.close_price)
-            ]
-            text = "\n".join(words)
+        if bar :
+            # text =  "<p style='color:white'>" \
+            #         "<strong>日期：{0}</strong></p>"\
+            #         "<p style='color:white'>开盘：{1}</p>"\
+            #         "<p style='color:white'>收盘：{2}</p>"\
+            #         "<p style='color:white'>最高价："\
+            #         "<span style='color:red;'>{3}</span></p>"\
+            #         "<p style='color:white'>最低价："\
+            #         "<span style='color:green;'>{4}</span></p>".format(
+            #         bar.datetime.strftime("%Y-%m-%d"),
+            #         str(bar.open_price),
+            #         str(bar.open_price),
+            #         str(bar.high_price),
+            #         str(bar.low_price))
+            text = "<p>" \
+                   "<span style='color:#FFDEAD'><strong>日期:</strong></span>" \
+                   "<span style='color:white'><strong>{0} </strong></span>" \
+                   "<span style='color:#FFDEAD'>开盘价:</span>"\
+                   "<span style='color:white;'>{1} </span>"\
+                   "<span style='color:#FFDEAD'>收盘价:</span>"\
+                   "<span style='color:white;'>{2} </span>"\
+                   "<span style='color:#FFDEAD'>最高价:</span>"\
+                   "<span style='color:red;'>{3} </span>"\
+                   "<span style='color:#FFDEAD'>最低价:</span> "\
+                   "<span style='color:green;'>{4} </span> " \
+                   "</p>".format(
+                        bar.datetime.strftime("%Y-%m-%d"),
+                        str(bar.open_price),
+                        str(bar.open_price),
+                        str(bar.high_price),
+                        str(bar.low_price))
         else:
-            text = ""
-
+            text=''
         return text
 
 
