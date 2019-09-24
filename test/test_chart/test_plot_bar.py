@@ -138,11 +138,11 @@ bars = database_manager.load_bar_data(
         Exchange.SZ,
         interval=Interval.DAILY,
         start=datetime(2015, 1, 1),
-        end=datetime(2019, 8, 14)
+        end=datetime(2019, 9, 18)
 )
 widget = ChartWidget()
 widget.add_plot("candle", hide_x_axis=False)
-widget.add_plot("volume", maximum_height=200)
+widget.add_plot("volume", hide_x_axis=False)
 widget.add_item(CandleItem, "candle", "candle")
 widget.add_item(VolumeItem, "volume", "volume")
 widget.add_cursor()

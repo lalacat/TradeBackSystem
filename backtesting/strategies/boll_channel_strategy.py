@@ -48,8 +48,10 @@ class BollChannelStrategy(CtaTemplate):
         )
         s = Settings()
         self.app = create_qapp(s)
+
         self.am = ArrayManager()
         self.addition_line = defaultdict(dict)
+        self.trade_orders = defaultdict(list)
         self.ups={}
         self.downs={}
         self.mids={}
@@ -82,18 +84,14 @@ class BollChannelStrategy(CtaTemplate):
         widget.add_plot("candle", hide_x_axis=False)
         widget.add_item(CandleItem, "candle", "candle")
         widget.add_cursor()
-        # widget.addItem()
-        arrow = pg.ArrowItem(pos=(len(self.bars),40), angle=90, tipAngle=60, headLen=8, tailLen=3, tailWidth=5,
-                             pen={'color': 'w', 'width': 1}, brush='r')
-        widget.update_history(self.bars,self.addition_line)
-        widget.addItem(arrow)
-        widget.show()
-        self.app.exec_()
+        widget.update_history(self.bars,self.addition_line,self.trade_orders)
+        # widget.update_history(self.bars,tradeorders=self.trade_orders)
+        # widget.show()
 
         # print(self.addition_line)
 
         # self.write_log("策略停止")
-
+        self.widget = widget
 
     def on_tick(self, tick: TickData):
         """
@@ -122,7 +120,6 @@ class BollChannelStrategy(CtaTemplate):
         self.ups[bar.datetime] = self.boll_up
         self.downs[bar.datetime] = self.boll_down
 
-
         self.cci_value = am.cci(self.cci_window)
         self.atr_value = am.atr(self.atr_window)
 
@@ -150,7 +147,6 @@ class BollChannelStrategy(CtaTemplate):
             self.short_stop = self.intra_trade_low + self.atr_value * self.sl_multiplier
             self.cover(self.short_stop, abs(self.pos), True)
 
-
         self.put_event()
 
     def on_order(self, order: OrderData):
@@ -164,6 +160,8 @@ class BollChannelStrategy(CtaTemplate):
         Callback of new trade datooa update.
         """
         # print("已成交:%s 此时仓位为:%d手" %(trade.tradeid,self.pos))
+        dt = trade.datetime
+        self.trade_orders[dt].append(trade)
         self.put_event()
 
     def on_stop_order(self, stop_order: StopOrder):

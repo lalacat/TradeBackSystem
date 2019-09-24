@@ -23,6 +23,9 @@ class BarManager:
         # 附加线有关的参数
         self._addition_line = defaultdict(dict)
         self._addition_line_first_ix = {}
+
+        # 成交单有关
+        self._trade_orders = defaultdict(dict)
         self._bar_type = None
 
     def update_history(self, history: List[BarData]) -> None:
@@ -97,6 +100,29 @@ class BarManager:
 
         return self._bars[dt]
 
+    def get_addition_line(self,ix:float)->dict:
+        ix = to_int(ix)
+        dt = self._index_datetime_map.get(ix,None)
+        result = {}
+        if dt:
+            for name,value in self._addition_line.items():
+                line_value = self._addition_line[name].get(dt,None)
+                if line_value:
+                    result[name] = round(line_value,2)
+
+        return result
+
+    def get_trade_order(self,ix:float) -> float:
+        ix = to_int(ix)
+        dt = self._index_datetime_map.get(ix,None)
+        tradeorders = None
+        if self._trade_orders:
+            tradeorders = self._trade_orders.get(dt,None)
+        return tradeorders
+
+
+
+
     def get_all_bars(self) -> List[BarData]:
         """
         Get all bar data.
@@ -118,7 +144,7 @@ class BarManager:
             max_ix = to_int(max_ix)
             max_ix = min(max_ix, self.get_count())
 
-        buf = self._price_ranges.get((min_ix, max_ix), None)
+        # buf = self._price_ranges.get((min_ix, max_ix), None)
         # if buf:
         #     return buf
 
@@ -135,7 +161,7 @@ class BarManager:
             temp_ix_min = self._addition_line_first_ix['ix_range'][0]
             if min_ix <= temp_ix_max and max_ix >= temp_ix_min  :
                 for line_name, value in self._addition_line_first_ix.items():
-                    if line_name is not'ix_range':
+                    if line_name is not 'ix_range':
                         min_index = max(temp_ix_min,min_ix)
                         max_index = min(temp_ix_max, max_ix)
                         for date_ix in range(min_index, max_index):
@@ -150,10 +176,7 @@ class BarManager:
             max_price = max(max_price, bar.high_price)
             min_price = min(min_price, bar.low_price)
 
-        # print(" %d :%3.3f  %d : %3.3f" % (min_ix,min_price,max_ix, max_price))
-
         # self._price_ranges[(min_ix, max_ix)] = (min_price, max_price)
-
         # min_y = min(min_price,min_y)
         # max_y = max(max_price,max_y)
         return min_price, max_price
@@ -196,7 +219,7 @@ class BarManager:
         self._price_ranges.clear()
         self._volume_ranges.clear()
 
-    def get_additionline_ix_range(self,addition_line:defaultdict):
+    def set_additionline_ix_range(self,addition_line:defaultdict):
         self._addition_line = addition_line
         # self._addition_line_first_ix['ix_range']=(0,1)
         for line_name in addition_line:
@@ -210,6 +233,9 @@ class BarManager:
                 temp_min, temp_max = self._addition_line_first_ix['ix_range']
                 self._addition_line_first_ix['ix_range'] = (min(temp_min, ix_min), max(temp_max, ix_max))
             self._addition_line_first_ix[line_name]=(ix_min,ix_max)
+
+    def set_trade_order(self,tradeorders):
+        self._trade_orders = tradeorders
 
     def clear_all(self) -> None:
         """

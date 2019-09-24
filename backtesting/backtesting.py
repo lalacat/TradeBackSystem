@@ -7,6 +7,8 @@ import multiprocessing
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FC
+
 from pandas import DataFrame
 
 from base_database.initialize import database_manager
@@ -508,6 +510,7 @@ class BacktestingEngine:
 
     def show_chart(self, df: DataFrame = None):
         """"""
+
         if not df:
             df = self.daily_df
         
@@ -533,6 +536,34 @@ class BacktestingEngine:
         df["net_pnl"].hist(bins=50)
 
         plt.show()
+
+    def get_fig(self):
+
+        df = self.daily_df
+
+        fig = plt.Figure(figsize=(10, 16))
+        canvas = FC(fig)
+
+        balance_plot = fig.add_subplot(111)
+        balance_plot.set_title("Balance")
+        balance_plot.plot(df.index,df["balance"])
+        # df["balance"].plot(legend=True)
+
+        # drawdown_plot = fig.add_subplot(4, 1, 2)
+        # drawdown_plot.set_title("Drawdown")
+        # drawdown_plot.fill_between(range(len(df)), df["drawdown"].values)
+        #
+        # pnl_plot = fig.add_subplot(4, 1, 3)
+        # pnl_plot.set_title("Daily Pnl")
+        # df["net_pnl"].plot(kind="bar", legend=False, grid=False, xticks=[])
+        #
+        # distribution_plot = fig.add_subplot(4, 1, 4)
+        # distribution_plot.set_title("Daily Pnl Distribution")
+        # df["net_pnl"].hist(bins=50)
+
+        return canvas
+
+
 
     def run_optimization(self, optimization_setting: OptimizationSetting, output=True):
         """"""
@@ -641,9 +672,9 @@ class BacktestingEngine:
 
             # Check whether limit orders can be filled.
             long_cross = (
-                order.direction == Direction.LONG 
-                and order.price >= long_cross_price 
-                and long_cross_price > 0
+                    order.direction == Direction.LONG
+                    and order.price >= long_cross_price
+                    and long_cross_price > 0
             )
 
             short_cross = (

@@ -6,8 +6,10 @@ from typing import List, Dict, Tuple
 import pyqtgraph as pg
 from PyQt5 import QtGui, QtCore, QtWidgets
 
-from base_utils.object import BarData
-from .base import UP_COLOR, DOWN_COLOR, PEN_WIDTH, BAR_WIDTH, UP_LINE_COLOR, DOWN_LINE_COLOR, COLOR_GROUP
+from base_utils.constant import Direction, Offset
+from base_utils.object import BarData, TradeData
+from .base import UP_COLOR, DOWN_COLOR, PEN_WIDTH, BAR_WIDTH, UP_LINE_COLOR, DOWN_LINE_COLOR, COLOR_GROUP, WHITE_COLOR, \
+    OPEN_COLOR, CLOSE_COLOR
 from .manager import BarManager
 
 
@@ -22,7 +24,6 @@ class ChartItem(pg.GraphicsObject):
         # 保存画笔，一个bar对应一个画笔，画笔能够设定bar的颜色图形
         self._bar_picutures: Dict[int, QtGui.QPicture] = {}
         self._item_picuture: QtGui.QPicture = None
-
 
         # 笔刷用于画阳线段
         self._up_pen: QtGui.QPen = pg.mkPen(
@@ -42,7 +43,7 @@ class ChartItem(pg.GraphicsObject):
         self.setFlag(self.ItemUsesExtendedStyleOption)
 
     @abstractmethod
-    def _draw_bar_picture(self, ix: int, bar: BarData,new_line=None) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, bar: BarData,**kwargs) -> QtGui.QPicture:
         """
         Draw picture for specific bar.
         """
@@ -71,27 +72,42 @@ class ChartItem(pg.GraphicsObject):
         """
         pass
 
-    def update_history(self, history: List[BarData]=None,addition_line:defaultdict()=None) -> BarData:
+    def update_history(self, history: List[BarData], addition_line: defaultdict() = None, tradeorders : defaultdict() =None ) -> BarData:
         """
         Update a list of bar data.
         将bar数据装入到绘画组中
         """
         self._bar_picutures.clear()
 
-        bars = self._manager.get_all_bars() # List
-        if not addition_line:
-            for ix, bar in enumerate(bars):
-                # 具体的item实现_draw_bar_picture方法，返回的是picture
-                bar_picture = self._draw_bar_picture(ix, bar)
-                self._bar_picutures[ix] = bar_picture
-        else:
-            for ix, bar in enumerate(bars):
-                temp_value = {}
+        bars = self._manager.get_all_bars()  # List
+        # if not addition_line:
+        #     for ix, bar in enumerate(bars):
+        #         # 具体的item实现_draw_bar_picture方法，返回的是picture
+        #         bar_picture = self._draw_bar_picture(ix, bar)
+        #         self._bar_picutures[ix] = bar_picture
+        # else:
+        #     for ix, bar in enumerate(bars):
+        #         temp_value = {}
+        #         for value in addition_line:
+        #             if addition_line[value].get(bar.datetime):
+        #                 temp_value[value] = addition_line[value].get(bar.datetime)
+        #         bar_picture = self._draw_bar_picture(ix, bar, temp_value)
+        #         self._bar_picutures[ix] = bar_picture
+        for ix, bar in enumerate(bars):
+            line_value = {}
+            tradeorder = None
+            # 添加附加线
+            if addition_line:
                 for value in addition_line:
                     if addition_line[value].get(bar.datetime):
-                        temp_value[value]=addition_line[value].get(bar.datetime)
-                bar_picture = self._draw_bar_picture(ix,bar,temp_value)
-                self._bar_picutures[ix] = bar_picture
+                        line_value[value] = addition_line[value].get(bar.datetime)
+            # 添加成交点
+            if tradeorders:
+                tradeorder = tradeorders.get(bar.datetime,None)
+
+            # 具体的item实现_draw_bar_picture方法，返回的是picture
+            bar_picture = self._draw_bar_picture(ix, bar,line_value,tradeorder)
+            self._bar_picutures[ix] = bar_picture
 
         self.update()
 
@@ -114,10 +130,10 @@ class ChartItem(pg.GraphicsObject):
             self.scene().update()
 
     def paint(
-        self,
-        painter: QtGui.QPainter,
-        opt: QtWidgets.QStyleOptionGraphicsItem,
-        w: QtWidgets.QWidget
+            self,
+            painter: QtGui.QPainter,
+            opt: QtWidgets.QStyleOptionGraphicsItem,
+            w: QtWidgets.QWidget
     ):
         """
         Reimplement the paint method of parent class.
@@ -164,11 +180,12 @@ class CandleItem(ChartItem):
     def __init__(self, manager: BarManager):
         """"""
         super().__init__(manager)
-        self.pre_values={}
-        self.pen_color={}
+        self.pre_values = {}
+        self.pen_color = {}
         self.colors = COLOR_GROUP
+        self.arrows = []
 
-    def _draw_bar_picture(self, ix: int, bar: BarData,addition_line:dict=None) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, bar: BarData, addition_line: dict = None,tradeorders:list() = None) -> QtGui.QPicture:
         """
         画每个bar的形态
         :param ix:
@@ -189,6 +206,7 @@ class CandleItem(ChartItem):
             painter.setBrush(self._down_brush)
 
         # Draw candle body
+
         if bar.open_price == bar.close_price:
             # 当涨停或跌停的时候，直接画横线
             painter.drawLine(
@@ -224,19 +242,34 @@ class CandleItem(ChartItem):
         if addition_line:
             for line_name in addition_line.keys():
                 line_value = addition_line[line_name]
-                if not self.pen_color.get(line_name,None):
-                    self.pen_color[line_name]=self.colors.pop()
+                if not self.pen_color.get(line_name, None):
+                    self.pen_color[line_name] = self.colors.pop()
                 painter.setPen(pg.mkPen(color=self.pen_color[line_name]))
 
-                if not self.pre_values.get(line_name,None):
+                if not self.pre_values.get(line_name, None):
                     self.pre_values[line_name] = 0
 
                 if self.pre_values[line_name] == 0:
-                    painter.drawLine(QtCore.QPointF(ix, line_value), QtCore.QPointF(ix,line_value))
+                    pass
+                    # painter.drawLine(QtCore.QPointF(ix, line_value), QtCore.QPointF(ix, line_value))
                 else:
                     painter.drawLine(QtCore.QPointF(ix - 1, self.pre_values[line_name]), QtCore.QPointF(ix, line_value))
                 self.pre_values[line_name] = line_value
 
+        # 成交点
+        if tradeorders:
+            for tradeorder in tradeorders:
+                trade_price = tradeorder.price
+                offset = tradeorder.offset
+                if offset == Offset.OPEN :
+                    arrow = pg.ArrowItem(pos=(ix, trade_price), angle=180, tipAngle=60, headLen=5, tailLen=10, tailWidth=2,
+                                         pen={'color': 'w', 'width': 0.8}, brush= OPEN_COLOR)
+                if offset == Offset.CLOSE :
+                    # arrow = pg.ArrowItem(pos=(ix, trade_price), angle=0, tipAngle=40, headLen=8, tailLen=None, tailWidth=8,
+                    #                      pen={'color': 'w', 'width': 1}, brush= CLOSE_COLOR)
+                    arrow = pg.ArrowItem(pos=(ix, trade_price), angle=0, tipAngle=40, headLen=5, tailLen=10, tailWidth=2,
+                                         pen={'color': 'w', 'width': 1}, brush= CLOSE_COLOR)
+                self.arrows.append(arrow)
         # Finish
         painter.end()
         return candle_picture
@@ -296,41 +329,125 @@ class CandleItem(ChartItem):
 
     def get_info_text(self, ix: int) -> str:
         bar = self._manager.get_bar(ix)
-        if bar :
-            # text =  "<p style='color:white'>" \
-            #         "<strong>日期：{0}</strong></p>"\
-            #         "<p style='color:white'>开盘：{1}</p>"\
-            #         "<p style='color:white'>收盘：{2}</p>"\
-            #         "<p style='color:white'>最高价："\
-            #         "<span style='color:red;'>{3}</span></p>"\
-            #         "<p style='color:white'>最低价："\
-            #         "<span style='color:green;'>{4}</span></p>".format(
-            #         bar.datetime.strftime("%Y-%m-%d"),
-            #         str(bar.open_price),
-            #         str(bar.open_price),
-            #         str(bar.high_price),
-            #         str(bar.low_price))
-            text = "<p>" \
-                   "<span style='color:#FFDEAD'><strong>日期:</strong></span>" \
+        addition_line = self._manager.get_addition_line(ix)
+        tradeorders = self._manager.get_trade_order(ix)
+        text = '<p>'
+        if bar:
+            text += "<span style='color:#FFDEAD'><strong>日期:</strong></span>" \
                    "<span style='color:white'><strong>{0} </strong></span>" \
-                   "<span style='color:#FFDEAD'>开盘价:</span>"\
-                   "<span style='color:white;'>{1} </span>"\
-                   "<span style='color:#FFDEAD'>收盘价:</span>"\
-                   "<span style='color:white;'>{2} </span>"\
-                   "<span style='color:#FFDEAD'>最高价:</span>"\
-                   "<span style='color:red;'>{3} </span>"\
-                   "<span style='color:#FFDEAD'>最低价:</span> "\
-                   "<span style='color:green;'>{4} </span> " \
-                   "</p>".format(
-                        bar.datetime.strftime("%Y-%m-%d"),
-                        str(bar.open_price),
-                        str(bar.open_price),
-                        str(bar.high_price),
-                        str(bar.low_price))
+                   "<span style='color:#FFDEAD'>开盘价:</span>" \
+                   "<span style='color:white;'>{1} </span>" \
+                   "<span style='color:#FFDEAD'>收盘价:</span>" \
+                   "<span style='color:white;'>{2} </span>" \
+                   "<span style='color:#FFDEAD'>最高价:</span>" \
+                   "<span style='color:{high_color}'>{3} </span>" \
+                   "<span style='color:#FFDEAD'>最低价:</span> " \
+                   "<span style='color:{low_color}'>{4} </span> " .format(
+                bar.datetime.strftime("%Y-%m-%d"),
+                str(bar.open_price),
+                str(bar.open_price),
+                str(bar.high_price),
+                str(bar.low_price),
+                high_color = UP_COLOR,
+                low_color = DOWN_COLOR)
+            if tradeorders:
+                # trade_text = "<p style='font-size:9pt'>"
+                trade_text = ""
+                for tradeorder in tradeorders:
+                    if tradeorder.offset == Offset.OPEN:
+                        color = OPEN_COLOR
+                    else:
+                        color = CLOSE_COLOR
+                    trade_text += "<span ><strong>{0}: </strong></span>" \
+                    "<span style='color:{1}'>{2} </span>".format(
+                        tradeorder.offset.value,
+                        color,
+                        tradeorder.price
+                    )
+                # trade_text += '</p>'
+                text += trade_text
+            if addition_line:
+                addition_text =  "<p style='color:#808069;font-size:8pt'>"
+                for name, value in addition_line.items():
+                    addition_text += "<span style='color:#FFDEAD' ><strong>{0}: </strong></span>" \
+                                     "<span style='color:{1}'>{2} </span>" .format(
+                        name,
+                        self.pen_color[name],
+                        value
+                    )
+                addition_text +='</p>'
+                text += addition_text
+            text += '</p>'
         else:
-            text=''
+            text = ''
         return text
 
+
+class LineItem(CandleItem):
+    def __init__(self, manager: BarManager):
+        """"""
+        super().__init__(manager)
+        self.colors = COLOR_GROUP
+
+    def _draw_bar_picture(self, ix: int, bar: BarData, *args,**kw) -> QtGui.QPicture:
+        """"""
+        # Create objects
+        line_picture = QtGui.QPicture()
+        painter = QtGui.QPainter(volume_picture)
+
+        # Set painter color
+        if bar.close_price >= bar.open_price:
+            painter.setPen(self._up_pen)
+            painter.setBrush(self._up_brush)
+        else:
+            painter.setPen(self._down_pen)
+            painter.setBrush(self._down_brush)
+
+        # Draw volume body
+        rect = QtCore.QRectF(
+            ix - BAR_WIDTH,
+            0,
+            BAR_WIDTH*2,
+            bar.volume
+        )
+        painter.drawRect(rect)
+
+        # Finish
+        painter.end()
+        return volume_picture
+
+    def boundingRect(self) -> QtCore.QRectF:
+        """"""
+        min_volume, max_volume = self._manager.get_volume_range()
+        rect = QtCore.QRectF(
+            0,
+            min_volume,
+            len(self._bar_picutures),
+            max_volume - min_volume
+        )
+        return rect
+
+    def get_y_range(self, min_ix: int = None, max_ix: int = None) -> Tuple[float, float]:
+        """
+        Get range of y-axis with given x-axis range.
+
+        If min_ix and max_ix not specified, then return range with whole data set.
+        """
+        min_volume, max_volume = self._manager.get_volume_range(min_ix, max_ix)
+        return min_volume, max_volume
+
+    def get_info_text(self, ix: int) -> str:
+        """
+        Get information text to show by cursor.
+        """
+        bar = self._manager.get_bar(ix)
+
+        if bar:
+            text = f"Volume {bar.volume}"
+        else:
+            text = ""
+
+        return text
 
 class VolumeItem(ChartItem):
     """"""
@@ -339,7 +456,7 @@ class VolumeItem(ChartItem):
         """"""
         super().__init__(manager)
 
-    def _draw_bar_picture(self, ix: int, bar: BarData,new_line=None) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, bar: BarData, *args,**kw) -> QtGui.QPicture:
         """"""
         # Create objects
         volume_picture = QtGui.QPicture()
@@ -357,7 +474,7 @@ class VolumeItem(ChartItem):
         rect = QtCore.QRectF(
             ix - BAR_WIDTH,
             0,
-            BAR_WIDTH * 2,
+            BAR_WIDTH*2,
             bar.volume
         )
         painter.drawRect(rect)

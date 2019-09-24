@@ -14,8 +14,7 @@ from .base import (
     to_int, NORMAL_FONT,
     UP_LINE_COLOR)
 from .axis import DatetimeAxis
-from .item import ChartItem
-
+from .item import ChartItem, VolumeItem, CandleItem
 
 pg.setConfigOptions(antialias=True)
 
@@ -39,6 +38,7 @@ class ChartWidget(pg.PlotWidget):
 
         self._right_ix: int = 0                     # Index of most right data
         self._bar_count: int = self.MIN_BAR_COUNT   # Total bar visible in chart
+        self._item_class = set()
 
         self._init_ui()
 
@@ -63,14 +63,17 @@ class ChartWidget(pg.PlotWidget):
     def add_cursor(self) -> None:
         """"""
         if not self._cursor:
-            self.info_label = pg.LabelItem()
-            self.info_label.setAttr('size','9pt')
-            # LabelItem本身是不能设置字体的样式，可以通过它的变量item来设置
-            self.info_label.item.setFont(NORMAL_FONT)
-            self.info_label.setAttr('justify', 'left')
-            # self.text_item.setFixedHeight(100)
-            # self.text_item.setFixedWidth(100)
-            self._layout.addItem(self.info_label, row=0, col=0)
+            self.info_label = None
+            if CandleItem in self._item_class:
+                self.info_label = pg.LabelItem()
+                # self.info_label.setAttr('size','9pt')
+                # LabelItem本身是不能设置字体的样式，可以通过它的变量item来设置
+                self.info_label.item.setFont(NORMAL_FONT)
+                self.info_label.setAttr('justify', 'left')
+
+                # self.text_item.setFixedHeight(100)
+                # self.text_item.setFixedWidth(100)
+                self._layout.addItem(self.info_label, row=0, col=0)
             self._cursor = ChartCursor(
                 self, self._manager, self._plots, self._item_plot_map,self.info_label)
 
@@ -128,7 +131,6 @@ class ChartWidget(pg.PlotWidget):
             first_plot = list(self._plots.values())[0]
             plot.setXLink(first_plot)
 
-
         # Store plot object in dict
         self._plots[plot_name] = plot
 
@@ -141,13 +143,14 @@ class ChartWidget(pg.PlotWidget):
         """
         Add chart item.
         """
+
         item = item_class(self._manager)
+        self._item_class.add(item_class)
         self._items[item_name] = item
 
         plot = self._plots.get(plot_name)
         plot.addItem(item)
         self._item_plot_map[item] = plot
-
         self._layout.nextRow()
         self._layout.addItem(plot)
 
@@ -175,18 +178,22 @@ class ChartWidget(pg.PlotWidget):
         if self._cursor:
             self._cursor.clear_all()
 
-    def update_history(self, history: List[BarData],addition_line:defaultdict=None) -> None:
+    def update_history(self, history: List[BarData],addition_line:defaultdict=None,tradeorders:defaultdict=None) -> None:
         """
         Update a list of bar data.
         这个方法导入bars数据
         """
         self._manager.update_history(history)
         if addition_line:
-            self._manager.get_additionline_ix_range(addition_line)
+            self._manager.set_additionline_ix_range(addition_line)
         for item in self._items.values():
-            item.update_history(history,addition_line)
+            item.update_history(history,addition_line,tradeorders)
+            if hasattr(item,'arrows'):
+                self._manager.set_trade_order(tradeorders)
+                arrows = item.arrows
+                for a in arrows:
+                    self._plots['candle'].addItem(a)
         self._update_plot_limits()
-
         self.move_to_right()
 
     def update_bar(self, bar: BarData) -> None:
@@ -217,7 +224,6 @@ class ChartWidget(pg.PlotWidget):
                 yMin=min_value,
                 yMax=max_value
             )
-            # print('limit:{0},{1}'.format(min_value, max_value))
 
     def _update_x_range(self) -> None:
         """
@@ -404,17 +410,18 @@ class ChartCursor(QtCore.QObject):
         """
         self._y_labels: Dict[str, pg.TextItem] = {}
         for plot_name, plot in self._plots.items():
-            label = pg.TextItem(
-                plot_name,
-                fill=CURSOR_COLOR, color=BLACK_COLOR
-            )
-            label.hide()
+            if isinstance(plot.items[0],CandleItem):
+                label = pg.TextItem(
+                    plot_name,
+                    fill=CURSOR_COLOR, color=BLACK_COLOR
+                )
+                label.hide()
 
-            # 值越小，就越先在窗口里显示这个东西。如果值＜0，就会比他的父对象更先显示出来。
-            label.setZValue(2)
-            label.setFont(NORMAL_FONT)
-            plot.addItem(label, ignoreBounds=True)
-            self._y_labels[plot_name] = label
+                # 值越小，就越先在窗口里显示这个东西。如果值＜0，就会比他的父对象更先显示出来。
+                label.setZValue(2)
+                label.setFont(NORMAL_FONT)
+                plot.addItem(label, ignoreBounds=True)
+                self._y_labels[plot_name] = label
 
         self._x_label: pg.TextItem = pg.TextItem(
             "datetime", fill=CURSOR_COLOR, color=BLACK_COLOR)
@@ -436,11 +443,10 @@ class ChartCursor(QtCore.QObject):
                 border=CURSOR_COLOR,
                 fill=BLACK_COLOR
             )
-            # print(info)
             info.hide()
             info.setZValue(2)
             info.setFont(NORMAL_FONT)
-            plot.addItem(info)  # , ignoreBounds=True)
+            plot.addItem(info, ignoreBounds=True)
             self._infos[plot_name] = info
 
     def _connect_signal(self) -> None:
@@ -459,18 +465,15 @@ class ChartCursor(QtCore.QObject):
         # First get current mouse point
         # 鼠标的坐标，基于当前界面的大小的位置，与界面的大小有关
         pos = evt
-        print('pos:{0}'.format(pos))
         for plot_name, view in self._views.items():
             # 获得界面的长宽，用来判断鼠标是否在界面中
             rect = view.sceneBoundingRect()
-            print('rect:{0}'.format(rect))
             # 判断鼠标的坐标是否在界面内
             if rect.contains(pos):
-                print(plot_name)
                 # 是基于实际的x,y的位置，界面的大小无关
                 mouse_point = view.mapSceneToView(pos)
                 self._x = to_int(mouse_point.x())
-                self._y = mouse_point.y()
+                self._y = round(mouse_point.y(),2)
                 # 判断鼠标是在那个item中
                 self._plot_name = plot_name
                 break
@@ -499,7 +502,7 @@ class ChartCursor(QtCore.QObject):
         """"""
         bottom_plot = list(self._plots.values())[-1]
         # y轴信息框的长度，越长显示y值得小数位数越多
-        axis_width = bottom_plot.getAxis("right").width()
+        axis_width = bottom_plot.getAxis("right").width()-20
         # 决定横坐标时间标签框离x轴的距离，axis_height过小，会使得x轴标签框的信息不全，太大的话离x轴就太远
         axis_height = bottom_plot.getAxis("bottom").height()
 
@@ -513,9 +516,9 @@ class ChartCursor(QtCore.QObject):
         for plot_name, label in self._y_labels.items():
             # 针对多个item，防止不同的item对应的y轴混淆
             if plot_name == self._plot_name:
+                # Y轴的标签
                 label.setText(str(self._y))
                 label.show()
-                # label.setPos(self._x, self._y)
                 label.setPos(bottom_right.x(), self._y)
             else:
                 label.hide()
@@ -527,6 +530,7 @@ class ChartCursor(QtCore.QObject):
             self._x_label.setPos(self._x, bottom_right.y())
             self._x_label.setAnchor((0, 0))
         # self.label.setText(self._x)
+
     def update_info(self) -> None:
         """
         更新框里的信息
@@ -536,27 +540,29 @@ class ChartCursor(QtCore.QObject):
 
         for item, plot in self._item_plot_map.items():
             item_info_text = item.get_info_text(self._x)
-
-            if plot not in buf:
-                buf[plot] = item_info_text
-            else:
-                if item_info_text:
-                    buf[plot] += ("\n\n" + item_info_text)
+            buf[plot] = item_info_text
+            # if plot not in buf:
+            #     buf[plot] = item_info_text
+            # else:
+            #     if item_info_text:
+            #         buf[plot] += ("\n\n" + item_info_text)
 
         for plot_name, plot in self._plots.items():
+
             plot_info_text = buf[plot]
             #  text的格式满足css样式
-            self.label_info.setText(plot_info_text)
-            '''
-          
-            info = self._infos[plot_name]
-            info.setText(plot_info_text)
-            info.show()
 
-            view = self._views[plot_name]
-            top_left = view.mapSceneToView(view.sceneBoundingRect().topLeft())
-            info.setPos(top_left)
-            '''
+            if isinstance(plot.items[0],VolumeItem):
+                info = self._infos[plot_name]
+                info.setText(plot_info_text)
+                info.show()
+
+                view = self._views[plot_name]
+                top_left = view.mapSceneToView(view.sceneBoundingRect().topLeft())
+                info.setPos(top_left)
+            elif isinstance(plot.items[0],CandleItem):
+                self.label_info.setText(plot_info_text)
+
     def move_right(self) -> None:
         """
         Move cursor index to right by 1.

@@ -78,7 +78,10 @@ class DownloadData(object):
 if __name__ == "__main__":
     s = Settings()
     dd = DownloadData(s)
-    dd.download_day_bar('002192.SZ','20190618','20190813')
+    dd.download_day_bar('002192.SZ','20190619','20190920') # 融捷
+    dd.download_day_bar('002466.SZ','20170101','20190920') # 天齐
+    dd.download_day_bar('002460.SZ','20170101','20190920') # 赣锋锂业
+
 
 
 
