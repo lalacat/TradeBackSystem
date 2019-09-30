@@ -2,8 +2,87 @@ from collections import defaultdict
 from typing import Dict, List, Tuple
 from datetime import datetime
 
+from pandas import DataFrame, DatetimeIndex,RangeIndex
+
+
 from base_utils.object import BarData
 from .base import to_int
+
+
+class LineManager:
+    """
+    管理dateFrame类型的数据
+    """
+    def __init__(self):
+        self._data_type = None
+        self._data:DataFrame = None
+        self._index_dataframe_map: Dict = {}
+        self._value_ranges:Dict = {}
+
+    def get_datetime(self,ix):
+        ix = max(to_int(ix) -1,0)
+        return self._index_dataframe_map.get(ix,None)
+
+    def get_count(self):
+        return len(self._data)
+
+    def get_all_bars(self) -> DataFrame:
+        """
+        返回所有要划线的数据
+        """
+        return self._data
+
+    def get_data(self, ix: float):
+        """
+        Get bar data with index.
+        """
+        ix = to_int(ix)
+        dt = self._index_dataframe_map.get(ix, None)
+        if not dt:
+            return None
+
+        return self._data.loc[dt]
+
+    def update_history(self,history):
+        # 对进来的数据按index排序，默认Index是datetime
+        self._data = history.sort_index()
+        del self._data['volume']
+        ix_list = range(len(self._data))
+        # 将横坐标与index对应起来
+        self._index_dataframe_map = dict(zip(ix_list,self._data.index))
+        # self._datas = dict(ix_list,self._data)
+        self._clear_cache()
+
+    def get_price_range(self, min_ix: float = None, max_ix: float = None) -> Tuple[float, float]:
+        if len(self._data) == 0:
+            return 0, 1
+
+        if not min_ix:
+            min_ix = 0
+            max_ix = len(self._data) - 1
+        else:
+            min_ix = to_int(min_ix)
+            max_ix = to_int(max_ix)
+            max_ix = min(max_ix, self.get_count())
+
+        buf = self._value_ranges.get((min_ix, max_ix), None)
+        if buf:
+            return buf
+
+        lines_list = self._data[min_ix:max_ix + 1]
+        max_value = lines_list.max().max()
+        min_value = lines_list.min().min()
+
+        self._value_ranges[(min_ix, max_ix)] = min_value,max_value
+
+        return min_value,max_value
+
+    def _clear_cache(self) -> None:
+        """
+        Clear cached range data.
+        """
+        self._value_ranges.clear()
+
 
 
 class BarManager:
@@ -26,7 +105,7 @@ class BarManager:
 
         # 成交单有关
         self._trade_orders = defaultdict(dict)
-        self._bar_type = None
+        self._data_type = None
 
     def update_history(self, history: List[BarData]) -> None:
         """
@@ -34,8 +113,8 @@ class BarManager:
         """
         # Put all new bars into dict
         # 创建bar时间与bar本身的对应
-        if self._bar_type is None:
-            self._bar_type = history[0].interval
+        if self._data_type is None:
+            self._data_type = history[0].interval
         for bar in history:
             self._bars[bar.datetime] = bar
 
@@ -115,13 +194,11 @@ class BarManager:
     def get_trade_order(self,ix:float) -> float:
         ix = to_int(ix)
         dt = self._index_datetime_map.get(ix,None)
-        tradeorders = None
+
         if self._trade_orders:
-            tradeorders = self._trade_orders.get(dt,None)
-        return tradeorders
-
-
-
+            return self._trade_orders.get(dt,None)
+        else:
+            return None
 
     def get_all_bars(self) -> List[BarData]:
         """
@@ -152,8 +229,6 @@ class BarManager:
         first_bar = bar_list[0]
         max_price = first_bar.high_price
         min_price = first_bar.low_price
-        # max_y = max_price
-        # min_y = min_price
 
         if len(self._addition_line_first_ix) != 0:
             # 获取附加线的最大最小值，一般都比原bar要大，所以为了能在界面中不丢失线，需要获得更大的y轴范围
@@ -220,8 +295,10 @@ class BarManager:
         self._volume_ranges.clear()
 
     def set_additionline_ix_range(self,addition_line:defaultdict):
+        """
+        获得附近线的范围，与bar的时间相互对应上
+        """
         self._addition_line = addition_line
-        # self._addition_line_first_ix['ix_range']=(0,1)
         for line_name in addition_line:
             temp_value = dict(sorted(addition_line[line_name].items(), key=lambda tp: tp[0]))
             temp_list = list(temp_value.keys())

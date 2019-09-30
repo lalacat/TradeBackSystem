@@ -9,7 +9,7 @@ from base_database.database import Driver, BaseDatabaseManager
 from base_utils.constant import Exchange, Interval
 from base_utils.object import BarData, TickData
 from settings.setting import Settings
-
+import pandas as pd
 
 # 根据Settings文件连接数据库
 def init(_:Driver,settings:Settings):
@@ -294,6 +294,46 @@ class MongoManager(BaseDatabaseManager):
         )
         data = [db_bar.to_bar() for db_bar in s]
         return data
+
+    def load_bar_dataframe_data(
+        self,
+        symbol: str,
+        exchange: Exchange,
+        interval: Interval,
+        start: datetime,
+        end: datetime) -> pd.DataFrame:
+        result = None
+        s = DbBarData.objects(
+            symbol=symbol,
+            exchange=exchange.value,
+            interval=interval.value,
+            datetime__gte=start,
+            datetime__lte=end,
+        )
+        for bar in s:
+            if result is None:
+                result = pd.DataFrame(
+                    {
+                        'open_price': bar.open_price,
+                        'close_price': bar.close_price,
+                        'high_price': bar.high_price,
+                        'low_price': bar.low_price,
+                        'volume': bar.volume
+                    },
+                    index=[bar.datetime]
+                )
+            else:
+                result = result.append(pd.DataFrame(
+                    {
+                        'open_price': bar.open_price,
+                        'close_price': bar.close_price,
+                        'high_price': bar.high_price,
+                        'low_price': bar.low_price,
+                        'volume': bar.volume
+                    },
+                    index=[bar.datetime]
+                ))
+        return result
 
     def load_tick_data(
         self, symbol: str, exchange: Exchange, start: datetime, end: datetime

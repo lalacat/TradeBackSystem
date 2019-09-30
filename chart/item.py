@@ -5,6 +5,7 @@ from typing import List, Dict, Tuple
 
 import pyqtgraph as pg
 from PyQt5 import QtGui, QtCore, QtWidgets
+from pandas import DataFrame
 
 from base_utils.constant import Direction, Offset
 from base_utils.object import BarData, TradeData
@@ -80,6 +81,7 @@ class ChartItem(pg.GraphicsObject):
         self._bar_picutures.clear()
 
         bars = self._manager.get_all_bars()  # List
+        if isinstance(bars,list):
         # if not addition_line:
         #     for ix, bar in enumerate(bars):
         #         # 具体的item实现_draw_bar_picture方法，返回的是picture
@@ -93,22 +95,26 @@ class ChartItem(pg.GraphicsObject):
         #                 temp_value[value] = addition_line[value].get(bar.datetime)
         #         bar_picture = self._draw_bar_picture(ix, bar, temp_value)
         #         self._bar_picutures[ix] = bar_picture
-        for ix, bar in enumerate(bars):
-            line_value = {}
-            tradeorder = None
-            # 添加附加线
-            if addition_line:
-                for value in addition_line:
-                    if addition_line[value].get(bar.datetime):
-                        line_value[value] = addition_line[value].get(bar.datetime)
-            # 添加成交点
-            if tradeorders:
-                tradeorder = tradeorders.get(bar.datetime,None)
+            for ix, bar in enumerate(bars):
+                line_value = {}
+                tradeorder = None
+                # 添加附加线
+                if addition_line:
+                    for value in addition_line:
+                        if addition_line[value].get(bar.datetime):
+                            line_value[value] = addition_line[value].get(bar.datetime)
+                # 添加成交点
+                if tradeorders:
+                    tradeorder = tradeorders.get(bar.datetime,None)
 
-            # 具体的item实现_draw_bar_picture方法，返回的是picture
-            bar_picture = self._draw_bar_picture(ix, bar,line_value,tradeorder)
-            self._bar_picutures[ix] = bar_picture
-
+                # 具体的item实现_draw_bar_picture方法，返回的是picture
+                bar_picture = self._draw_bar_picture(ix, bar,line_value,tradeorder)
+                self._bar_picutures[ix] = bar_picture
+        else:
+            ixs = range(self._manager.get_count())
+            for ix,bar in zip(ixs,bars.iterrows()):
+                bar_picture = self._draw_bar_picture(ix, bar[1])
+                self._bar_picutures[ix] = bar_picture
         self.update()
 
     def update_bar(self, bar: BarData) -> BarData:
@@ -383,47 +389,48 @@ class CandleItem(ChartItem):
         return text
 
 
-class LineItem(CandleItem):
+class LineItem(ChartItem):
     def __init__(self, manager: BarManager):
         """"""
         super().__init__(manager)
         self.colors = COLOR_GROUP
+        self.pre_values = {}
+        self.pen_color = {}
+        self.colors = COLOR_GROUP
 
-    def _draw_bar_picture(self, ix: int, bar: BarData, *args,**kw) -> QtGui.QPicture:
+    def _draw_bar_picture(self, ix: int, datas: Dict, *args,**kw) -> QtGui.QPicture:
         """"""
-        # Create objects
+        # 设置颜色
+        # 设置线的类型
+
         line_picture = QtGui.QPicture()
-        painter = QtGui.QPainter(volume_picture)
-
+        painter = QtGui.QPainter(line_picture)
+        self.get_info_text(ix)
         # Set painter color
-        if bar.close_price >= bar.open_price:
-            painter.setPen(self._up_pen)
-            painter.setBrush(self._up_brush)
-        else:
-            painter.setPen(self._down_pen)
-            painter.setBrush(self._down_brush)
+        for line_name,line_value in datas.items():
+            if not self.pen_color.get(line_name, None):
+                self.pen_color[line_name] = self.colors.pop()
+            painter.setPen(pg.mkPen(color=self.pen_color[line_name]))
 
-        # Draw volume body
-        rect = QtCore.QRectF(
-            ix - BAR_WIDTH,
-            0,
-            BAR_WIDTH*2,
-            bar.volume
-        )
-        painter.drawRect(rect)
+            if not self.pre_values.get(line_name, None):
+                self.pre_values[line_name] = 0
+
+            if self.pre_values[line_name] != 0:
+                painter.drawLine(QtCore.QPointF(ix - 1, self.pre_values[line_name]), QtCore.QPointF(ix, line_value))
+            self.pre_values[line_name] = line_value
 
         # Finish
         painter.end()
-        return volume_picture
+        return line_picture
 
     def boundingRect(self) -> QtCore.QRectF:
         """"""
-        min_volume, max_volume = self._manager.get_volume_range()
+        min_price, max_price = self._manager.get_price_range()
         rect = QtCore.QRectF(
             0,
-            min_volume,
+            min_price,
             len(self._bar_picutures),
-            max_volume - min_volume
+            max_price - min_price
         )
         return rect
 
@@ -433,8 +440,8 @@ class LineItem(CandleItem):
 
         If min_ix and max_ix not specified, then return range with whole data set.
         """
-        min_volume, max_volume = self._manager.get_volume_range(min_ix, max_ix)
-        return min_volume, max_volume
+        min_price, max_price = self._manager.get_price_range(min_ix, max_ix)
+        return min_price, max_price
 
     def get_info_text(self, ix: int) -> str:
         """
@@ -448,6 +455,43 @@ class LineItem(CandleItem):
             text = ""
 
         return text
+
+    def get_info_text(self, ix: int) -> str:
+        """
+        Get information text to show by cursor.
+        显示在光标上
+        # TODO 显示内容，悬浮框设置，在widget
+        """
+        bar = self._manager.get_data(ix)
+        print(type(bar))
+        print(bar)
+
+        if bar:
+            words = [
+                "Date",
+                bar.datetime.strftime("%Y-%m-%d"),
+                "",
+                "Time",
+                bar.datetime.strftime("%H:%M"),
+                "",
+                "Open",
+                str(bar.open_price),
+                "",
+                "High",
+                str(bar.high_price),
+                "",
+                "Low",
+                str(bar.low_price),
+                "",
+                "Close",
+                str(bar.close_price)
+            ]
+            text = "\n".join(words)
+        else:
+            text = ""
+
+        return text
+
 
 class VolumeItem(ChartItem):
     """"""

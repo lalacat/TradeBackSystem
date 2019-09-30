@@ -2,6 +2,8 @@ from abc import abstractmethod, ABC
 from enum import Enum
 from datetime import datetime
 from enum import Enum
+import pandas as pd
+
 
 # 提供基础设定，及基础的抽象方法
 from typing import Optional, Sequence
@@ -31,6 +33,17 @@ class BaseDatabaseManager(ABC):
         start: datetime,
         end: datetime
     ) -> Sequence["BarData"]:
+        pass
+
+    @abstractmethod
+    def load_bar_dataframe_data(
+        self,
+        symbol: str,
+        exchange: "Exchange",
+        interval: "Interval",
+        start: datetime,
+        end: datetime
+        ) -> pd.DataFrame:
         pass
 
     @abstractmethod

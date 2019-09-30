@@ -23,11 +23,11 @@ class ChartWidget(pg.PlotWidget):
     """"""
     MIN_BAR_COUNT = 30
 
-    def __init__(self, parent: QtWidgets.QWidget = None):
+    def __init__(self, parent: QtWidgets.QWidget = None,manager: BarManager=BarManager):
         """"""
         super().__init__(parent)
 
-        self._manager: BarManager = BarManager()
+        self._manager = manager()
 
         self._plots: Dict[str, pg.PlotItem] = {}
         self._items: Dict[str, ChartItem] = {}
@@ -76,7 +76,6 @@ class ChartWidget(pg.PlotWidget):
                 self._layout.addItem(self.info_label, row=0, col=0)
             self._cursor = ChartCursor(
                 self, self._manager, self._plots, self._item_plot_map,self.info_label)
-
 
     def add_plot(
         self,
@@ -189,6 +188,7 @@ class ChartWidget(pg.PlotWidget):
         for item in self._items.values():
             item.update_history(history,addition_line,tradeorders)
             if hasattr(item,'arrows'):
+
                 self._manager.set_trade_order(tradeorders)
                 arrows = item.arrows
                 for a in arrows:
@@ -287,7 +287,6 @@ class ChartWidget(pg.PlotWidget):
         """
         delta = event.angleDelta()
 
-
         if delta.y() > 0:
             self._on_key_up()
         elif delta.y() < 0:
@@ -301,8 +300,9 @@ class ChartWidget(pg.PlotWidget):
         self._right_ix = max(self._right_ix, self._bar_count)
 
         self._update_x_range()
-        self._cursor.move_left()
-        self._cursor.update_info()
+        if self._cursor:
+            self._cursor.move_left()
+            self._cursor.update_info()
 
     def _on_key_right(self) -> None:
         """
@@ -312,8 +312,9 @@ class ChartWidget(pg.PlotWidget):
         self._right_ix = min(self._right_ix, self._manager.get_count())
 
         self._update_x_range()
-        self._cursor.move_right()
-        self._cursor.update_info()
+        if self._cursor:
+            self._cursor.move_right()
+            self._cursor.update_info()
 
     def _on_key_down(self) -> None:
         """
@@ -323,7 +324,8 @@ class ChartWidget(pg.PlotWidget):
         self._bar_count = min(int(self._bar_count), self._manager.get_count())
 
         self._update_x_range()
-        self._cursor.update_info()
+        if self._cursor:
+            self._cursor.update_info()
 
     def _on_key_up(self) -> None:
         """
@@ -333,7 +335,8 @@ class ChartWidget(pg.PlotWidget):
         self._bar_count = max(int(self._bar_count), self.MIN_BAR_COUNT)
 
         self._update_x_range()
-        self._cursor.update_info()
+        if self._cursor:
+            self._cursor.update_info()
 
     def move_to_right(self) -> None:
         """
@@ -342,7 +345,8 @@ class ChartWidget(pg.PlotWidget):
         # 导入数据的总个数
         self._right_ix = self._manager.get_count()
         self._update_x_range()
-        self._cursor.update_info()
+        if self._cursor:
+            self._cursor.update_info()
 
 
 class ChartCursor(QtCore.QObject):

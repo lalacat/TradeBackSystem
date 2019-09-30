@@ -1,9 +1,10 @@
+from datetime import datetime
 from typing import List
 
 import pyqtgraph as pg
 
 from base_utils.constant import Interval
-from .manager import BarManager
+from .manager import BarManager, LineManager
 from .base import AXIS_WIDTH, NORMAL_FONT
 
 
@@ -32,12 +33,18 @@ class DatetimeAxis(pg.AxisItem):
             if not dt:
                 s = ""
             else:
-                if self._manager._bar_type == Interval.DAILY:
-                    s = dt.strftime("%Y-%m-%d")
-                elif dt.hour:
-                    s = dt.strftime("%Y-%m-%d\n%H:%M:%S")
-            # else:
-            #     s = dt.strftime("%Y-%m-%d")
+                if isinstance(self._manager,BarManager):
+                    if self._manager._bar_type == Interval.DAILY:
+                        s = dt.strftime("%Y-%m-%d")
+                    elif dt.hour:
+                        s = dt.strftime("%Y-%m-%d\n%H:%M:%S")
+                elif isinstance(self._manager,LineManager):
+                    if isinstance(dt, datetime):
+                        s = dt.strftime("%Y-%m-%d")
+                    else:
+                        s = str(dt)
+                else:
+                    s = ''
 
             strings.append(s)
 
