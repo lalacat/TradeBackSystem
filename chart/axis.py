@@ -26,7 +26,7 @@ class DatetimeAxis(pg.AxisItem):
         # 重写方法，设置横坐标的格式
         """
         strings = []
-
+        print(values)
         for ix in values:
             dt = self._manager.get_datetime(ix)
 
@@ -34,7 +34,7 @@ class DatetimeAxis(pg.AxisItem):
                 s = ""
             else:
                 if isinstance(self._manager,BarManager):
-                    if self._manager._bar_type == Interval.DAILY:
+                    if self._manager._data_type == Interval.DAILY:
                         s = dt.strftime("%Y-%m-%d")
                     elif dt.hour:
                         s = dt.strftime("%Y-%m-%d\n%H:%M:%S")

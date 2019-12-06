@@ -82,19 +82,6 @@ class ChartItem(pg.GraphicsObject):
 
         bars = self._manager.get_all_bars()  # List
         if isinstance(bars,list):
-        # if not addition_line:
-        #     for ix, bar in enumerate(bars):
-        #         # 具体的item实现_draw_bar_picture方法，返回的是picture
-        #         bar_picture = self._draw_bar_picture(ix, bar)
-        #         self._bar_picutures[ix] = bar_picture
-        # else:
-        #     for ix, bar in enumerate(bars):
-        #         temp_value = {}
-        #         for value in addition_line:
-        #             if addition_line[value].get(bar.datetime):
-        #                 temp_value[value] = addition_line[value].get(bar.datetime)
-        #         bar_picture = self._draw_bar_picture(ix, bar, temp_value)
-        #         self._bar_picutures[ix] = bar_picture
             for ix, bar in enumerate(bars):
                 line_value = {}
                 tradeorder = None
@@ -136,10 +123,10 @@ class ChartItem(pg.GraphicsObject):
             self.scene().update()
 
     def paint(
-            self,
-            painter: QtGui.QPainter,
-            opt: QtWidgets.QStyleOptionGraphicsItem,
-            w: QtWidgets.QWidget
+        self,
+        painter: QtGui.QPainter,
+        opt: QtWidgets.QStyleOptionGraphicsItem,
+        w: QtWidgets.QWidget
     ):
         """
         Reimplement the paint method of parent class.
@@ -156,6 +143,7 @@ class ChartItem(pg.GraphicsObject):
         if rect_area != self._rect_area or not self._item_picuture:
             self._rect_area = rect_area
             self._draw_item_picture(min_ix, max_ix)
+
         self._item_picuture.play(painter)
 
     def _draw_item_picture(self, min_ix: int, max_ix: int) -> None:
@@ -212,7 +200,6 @@ class CandleItem(ChartItem):
             painter.setBrush(self._down_brush)
 
         # Draw candle body
-
         if bar.open_price == bar.close_price:
             # 当涨停或跌停的时候，直接画横线
             painter.drawLine(
@@ -405,7 +392,7 @@ class LineItem(ChartItem):
 
         line_picture = QtGui.QPicture()
         painter = QtGui.QPainter(line_picture)
-        self.get_info_text(ix)
+        # self.get_info_text(ix)
         # Set painter color
         for line_name,line_value in datas.items():
             if not self.pen_color.get(line_name, None):
@@ -446,51 +433,21 @@ class LineItem(ChartItem):
     def get_info_text(self, ix: int) -> str:
         """
         Get information text to show by cursor.
-        """
-        bar = self._manager.get_bar(ix)
-
-        if bar:
-            text = f"Volume {bar.volume}"
-        else:
-            text = ""
-
-        return text
-
-    def get_info_text(self, ix: int) -> str:
-        """
-        Get information text to show by cursor.
         显示在光标上
-        # TODO 显示内容，悬浮框设置，在widget
         """
-        bar = self._manager.get_data(ix)
-        print(type(bar))
-        print(bar)
-
-        if bar:
-            words = [
-                "Date",
-                bar.datetime.strftime("%Y-%m-%d"),
-                "",
-                "Time",
-                bar.datetime.strftime("%H:%M"),
-                "",
-                "Open",
-                str(bar.open_price),
-                "",
-                "High",
-                str(bar.high_price),
-                "",
-                "Low",
-                str(bar.low_price),
-                "",
-                "Close",
-                str(bar.close_price)
-            ]
-            text = "\n".join(words)
+        # Series
+        line = self._manager.get_bar(ix)
+        word = []
+        if line is not None:
+            for k,i in line.items():
+                word.append(k)
+                word.append(str(i))
+            text2 = "\n".join(word)
         else:
-            text = ""
+            text2 = ""
 
-        return text
+        return text2
+
 
 
 class VolumeItem(ChartItem):
@@ -518,7 +475,7 @@ class VolumeItem(ChartItem):
         rect = QtCore.QRectF(
             ix - BAR_WIDTH,
             0,
-            BAR_WIDTH*2,
+            BAR_WIDTH * 2,
             bar.volume
         )
         painter.drawRect(rect)

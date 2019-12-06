@@ -32,7 +32,7 @@ class LineManager:
         """
         return self._data
 
-    def get_data(self, ix: float):
+    def get_bar(self, ix: float):
         """
         Get bar data with index.
         """

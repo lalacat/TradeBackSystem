@@ -21,16 +21,14 @@ database_manager = init('_',s)
 RJ_new = database_manager.load_bar_dataframe_data(
         '002192',Exchange.SZ , Interval.DAILY, start, end)
 RJ_new = RJ_new.sort_index()
+print(RJ_new)
 
 widget = ChartWidget(manager=LineManager)
 # widget.add_plot("candle", hide_x_axis=False)
 widget.add_plot("line", hide_x_axis=False)
 # widget.add_item(CandleItem, "candle", "candle")
 widget.add_item(LineItem, "line", "line")
-# widget.add_cursor()
-
-
-# new_data = bars[:]
+widget.add_cursor()
 
 widget.update_history(RJ_new)
 

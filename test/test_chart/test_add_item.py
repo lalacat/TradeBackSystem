@@ -44,7 +44,6 @@ class TestWidget(pg.PlotWidget):
         axis_height = plot_01.getAxis("bottom").height()
         axis_offset = QtCore.QPointF(axis_width, axis_height)
         bottom_view = plot_01.getViewBox()
-        print(bottom_view)
         # bottom_right= bottom_view.mapSceneToView(
         # bottom_view.sceneBoundingRect().bottomRight() - axis_offset)
         # top_left = bottom_view.mapSceneToView(bottom_view.sceneBoundingRect().topLeft())
@@ -52,7 +51,7 @@ class TestWidget(pg.PlotWidget):
         # plot_02 = pg.PlotItem()
         # plot_02.addItem(label)
 
-
+        #
         self._layout.addItem(plot_01)
         self._layout.nextRow()
         self._layout.addItem(plot_01)

@@ -50,19 +50,19 @@ df = engine.daily_df
 # pw = pg.plot(title='pyqtgraph.plot()')
 # pw.plot(df["balance"])  # 绘制第一个图
 
-widget = engine.strategy.widget
-chart = engine.get_fig()
+# widget = engine.strategy.widget
+# chart = engine.get_fig()
 s = Settings()
 app = create_qapp(s)
-#
-w = QtGui.QWidget()
-layout = QtGui.QGridLayout()
-w.setLayout(layout)
-layout.addWidget(widget, 0, 0)   # button goes in upper-left
-layout.addWidget(chart, 0, 1)   # text edit goes in middle-left
-#
-w.show()
-#
+# #
+# w = QtGui.QWidget()
+# layout = QtGui.QGridLayout()
+# w.setLayout(layout)
+# layout.addWidget(widget, 0, 0)   # button goes in upper-left
+# layout.addWidget(chart, 0, 1)   # text edit goes in middle-left
+# #
+# w.show()
+# #
 app.exec_()
 
 # print(pprint(result))

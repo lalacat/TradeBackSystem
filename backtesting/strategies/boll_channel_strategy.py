@@ -9,7 +9,7 @@ from base_utils.utility import BarGenerator, ArrayManager
 
 import pyqtgraph as pg
 
-from chart import ChartWidget, CandleItem
+from chart import ChartWidget, CandleItem, VolumeItem
 from settings.setting import Settings
 from ui import create_qapp
 
@@ -83,10 +83,12 @@ class BollChannelStrategy(CtaTemplate):
         widget = ChartWidget()
         widget.add_plot("candle", hide_x_axis=False)
         widget.add_item(CandleItem, "candle", "candle")
+        widget.add_plot("volume")
+        widget.add_item(VolumeItem, "volume", "volume")
         widget.add_cursor()
         widget.update_history(self.bars,self.addition_line,self.trade_orders)
         # widget.update_history(self.bars,tradeorders=self.trade_orders)
-        # widget.show()
+        widget.show()
 
         # print(self.addition_line)
 

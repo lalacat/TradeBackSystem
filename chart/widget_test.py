@@ -365,7 +365,7 @@ class ChartCursor(QtCore.QObject):
         manager: BarManager,
         plots: Dict[str, pg.GraphicsObject],
         item_plot_map: Dict[ChartItem, pg.GraphicsObject],
-        label_item=None
+        label_item
     ):
         """"""
         super().__init__()
@@ -378,6 +378,7 @@ class ChartCursor(QtCore.QObject):
         self._x: int = 0
         self._y: int = 0
         self._plot_name: str = ""
+        self._plot_item = None
 
         self._init_ui()
         self._connect_signal()
@@ -421,6 +422,16 @@ class ChartCursor(QtCore.QObject):
         """
         self._y_labels: Dict[str, pg.TextItem] = {}
         # Y轴是否显示
+        # for plot_name, plot in self._plots.items():
+        #     if not isinstance(plot.items[0], VolumeItem):
+        #         label = pg.TextItem(
+        #             plot_name, fill=CURSOR_COLOR, color=BLACK_COLOR)
+        #         label.hide()
+        #         # 值越小，就越先在窗口里显示这个东西。如果值＜0，就会比他的父对象更先显示出来。
+        #         label.setZValue(2)
+        #         label.setFont(NORMAL_FONT)
+        #         plot.addItem(label, ignoreBounds=True)
+        #         self._y_labels[plot_name] = label
         for plot_name, plot in self._plots.items():
             label = pg.TextItem(
                 plot_name,fill=CURSOR_COLOR, color=BLACK_COLOR)
@@ -437,12 +448,10 @@ class ChartCursor(QtCore.QObject):
         self._x_label.hide()
         self._x_label.setZValue(2)
         self._x_label.setFont(NORMAL_FONT)
-        #  将文本框添加到item中
         plot.addItem(self._x_label, ignoreBounds=True)
         '''
     def _init_info(self) -> None:
         """
-        与放大缩小有关
         """
         self._infos: Dict[str, pg.TextItem] = {}
         for plot_name, plot in self._plots.items():
@@ -472,20 +481,14 @@ class ChartCursor(QtCore.QObject):
             return
 
         # First get current mouse point
-        # 鼠标的坐标，基于当前界面的大小的位置，与界面的大小有关
         pos = evt
+
         for plot_name, view in self._views.items():
-            # 获得界面的长宽，用来判断鼠标是否在界面中
             rect = view.sceneBoundingRect()
-            # 判断鼠标的坐标是否在界面内
             if rect.contains(pos):
-                # 是基于实际的x,y的位置，界面的大小无关
                 mouse_point = view.mapSceneToView(pos)
                 self._x = to_int(mouse_point.x())
                 self._y = mouse_point.y()
-
-                # self._y = round(mouse_point.y(),2)
-                # 判断鼠标是在那个item中
                 self._plot_name = plot_name
                 break
 
@@ -498,13 +501,11 @@ class ChartCursor(QtCore.QObject):
         """"""
         for v_line in self._v_lines.values():
             v_line.setPos(self._x)
-            # 竖直线显示
             v_line.show()
 
         for plot_name, h_line in self._h_lines.items():
-            if plot_name == self._plot_name:
+            if plot_name == self._plot_name :
                 h_line.setPos(self._y)
-                # 水平线显示
                 h_line.show()
             else:
                 h_line.hide()
@@ -512,22 +513,18 @@ class ChartCursor(QtCore.QObject):
     def _update_label(self) -> None:
         """"""
         bottom_plot = list(self._plots.values())[-1]
-        # y轴信息框的长度，越长显示y值得小数位数越多
         axis_width = bottom_plot.getAxis("right").width()-20
-        # 决定横坐标时间标签框离x轴的距离，axis_height过小，会使得x轴标签框的信息不全，太大的话离x轴就太远
         axis_height = bottom_plot.getAxis("bottom").height()
         axis_offset = QtCore.QPointF(axis_width, axis_height)
 
         bottom_view = list(self._views.values())[-1]
+
         bottom_right = bottom_view.mapSceneToView(
             bottom_view.sceneBoundingRect().bottomRight() - axis_offset
         )
 
-        # self.data = self._manager.get_bar(self._x)
         for plot_name, label in self._y_labels.items():
-            # 针对多个item，防止不同的item对应的y轴混淆
-            if plot_name == self._plot_name:
-                # Y轴的标签
+            if plot_name == self._plot_name :#and plot_name != 'volume':
                 label.setText(str(self._y))
                 label.show()
                 label.setPos(bottom_right.x(), self._y)
@@ -536,14 +533,9 @@ class ChartCursor(QtCore.QObject):
         '''
         dt = self._manager.get_datetime(self._x)
         if dt:
-            # self._x_label.setText(dt.strftime("%Y-%m-%d %H:%M:%S"))
-            if isinstance(dt,datetime.datetime):
-                text = dt.strftime("%Y-%m-%d")
-            else:
-                text = str(dt)
-            self._x_label.setText(text)
+            self._x_label.setText(dt.strftime("%Y-%m-%d %H:%M:%S"))
             self._x_label.show()
-            self._x_label.setPos(self._x, bottom_right.y())
+            self._x_label.setPos(self._x-3, bottom_right.y())
             self._x_label.setAnchor((0, 0))
         '''
     def update_info(self) -> None:
@@ -572,7 +564,7 @@ class ChartCursor(QtCore.QObject):
                 dt = self._manager.get_datetime(self._x)
                 if dt:
                     times = 'time:{0}'.format(dt.strftime("%Y-%m-%d %H:%M:%S"))
-                    times  += ('\n' + plot_info_text)
+                    plot_info_text += ('\n\n' + times)
                 info = self._infos[plot_name]
                 info.setText(plot_info_text)
                 info.show()

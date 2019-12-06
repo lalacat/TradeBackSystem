@@ -34,17 +34,23 @@ def generate_bar_from_row(row, symbol, exchange):
 ts_code = '002192.SZ'
 startday = '20190603'
 pro = ts.pro_api(token)
-df = pro.daily(ts_code=ts_code, start_date=startday)
-symbol, exchange = ts_code.split(".")
-# print(df)
-for _,row in df.iterrows():
-    bar = generate_bar_from_row(row,symbol,exchange)
-s = Settings()
-database_manager = init('a',s)
+# df = pro.daily(ts_code=ts_code, start_date=startday)
 
-# db_bar = DbBarData.from_bar(bar)
-# print(db_bar)
-# db_bar.save()
-DbBarData.objects(
-    # symbol=bar.symbol, interval=bar.interval.value, datetime=bar.datetime
-).update_one(upsert=True,set__symbol=bar.symbol,set__interval=bar.interval.value,set__datetime=bar.datetime)
+df = pro.index_dailybasic()
+df = pro.index_dailybasic(trade_date='20181018', fields='ts_code,trade_date,turnover_rate,pe')
+
+print(df)
+
+# symbol, exchange = ts_code.split(".")
+# # print(df)
+# for _,row in df.iterrows():
+#     bar = generate_bar_from_row(row,symbol,exchange)
+# s = Settings()
+# database_manager = init('a',s)
+#
+# # db_bar = DbBarData.from_bar(bar)
+# # print(db_bar)
+# # db_bar.save()
+# DbBarData.objects(
+#     # symbol=bar.symbol, interval=bar.interval.value, datetime=bar.datetime
+# ).update_one(upsert=True,set__symbol=bar.symbol,set__interval=bar.interval.value,set__datetime=bar.datetime)
