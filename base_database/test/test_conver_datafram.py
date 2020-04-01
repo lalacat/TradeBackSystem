@@ -9,13 +9,13 @@ from ui import create_qapp
 
 s = Settings()
 
-start = datetime(2018, 9, 1)
-end = datetime(2019, 9, 18)
+start = datetime(2019, 11, 23)
+end = datetime(2019, 11, 28)
 
 RJ = database_manager.load_bar_data(
         '002192',Exchange.SZ , Interval.DAILY, start, end)
 
-
+print(RJ)
 # result= None
 #
 # for bar in RJ:
@@ -45,7 +45,7 @@ RJ = database_manager.load_bar_data(
 
 RJ_new = database_manager.load_bar_dataframe_data(
         '002192',Exchange.SZ , Interval.DAILY, start, end)
-RJ_new = RJ_new.sort_index()
+print(RJ_new)
 
 # if isinstance(RJ_new.index, pd.DatetimeIndex):
 #     print(type(RJ_new.index))

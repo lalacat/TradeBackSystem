@@ -15,12 +15,12 @@ import numpy as np
 s = Settings()
 
 dbm = init('_',s)
-start = datetime(2019, 1, 1)
-end = datetime(2019, 11, 22)
+start = datetime(2019, 11, 23)
+end = datetime(2019, 11, 28)
 RJ = dbm.load_bar_dataframe_data(
-'600196',Exchange.SH , Interval.DAILY, start, end
+'002192',Exchange.SZ , Interval.DAILY, start, end
 )
-
+print(RJ)
 
 close = RJ['close_price']
 lagclose = close.shift(1)
@@ -48,4 +48,8 @@ plt.plot(cum_return)
 comporet = np.log(close/lagclose)
 comporet.name = 'comporet'
 print(comporet.head(5))
-plt.show()
+# plt.show()
+# 多期复利
+comporet2 = np.log(close/close.shift(2))
+comporet2.name = 'comporet2'
+print(comporet2.head(5))

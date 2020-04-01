@@ -68,6 +68,9 @@ class DbBarData(Document):
     low_price: float = FloatField()
     close_price: float = FloatField()
 
+    build_time: datetime = DateTimeField()
+    remove_time:datetime = DateTimeField()
+
     # 在集合上指定索引以加快查询速度。这是通过创建indexes在
     # meta字典中调用的索引规范列表完成的，
     # 其中索引规范可以是单个字段名称，
@@ -98,7 +101,8 @@ class DbBarData(Document):
         db_bar.low_price = bar.low_price
         db_bar.close_price = bar.close_price
         db_bar.open_interest = bar.open_interest
-
+        db_bar.build_time = bar.build_time
+        db_bar.remove_time = bar.remove_time
         return db_bar
 
     def to_bar(self):
@@ -116,6 +120,8 @@ class DbBarData(Document):
             high_price=self.high_price,
             low_price=self.low_price,
             close_price=self.close_price,
+            build_time = self.build_time,
+            remove_time = self.remove_time,
             gateway_name="DB",
         )
         return bar
@@ -318,7 +324,8 @@ class MongoManager(BaseDatabaseManager):
                         'close_price': bar.close_price,
                         'high_price': bar.high_price,
                         'low_price': bar.low_price,
-                        'volume': bar.volume
+                        'volume': bar.volume,
+
                     },
                     index=[bar.datetime]
                 )

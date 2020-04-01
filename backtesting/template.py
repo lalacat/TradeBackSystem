@@ -21,7 +21,7 @@ class CtaTemplate(ABC):
         cta_engine: Any,
         strategy_name: str,
         vt_symbol: str,
-        setting: dict,
+        setting: dict=None,
     ):
         """"""
         self.cta_engine = cta_engine
