@@ -1,4 +1,4 @@
-from base_database.database_mongo import init, Test, Task_anshan
+from base_database.database_mongo import init, Test
 from settings.setting import Settings
 
 s = Settings()

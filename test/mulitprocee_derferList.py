@@ -2,9 +2,7 @@ import multiprocessing
 import time
 from math import *
 
-from twisted.internet import defer,reactor
-
-from twisted_frame.utils.defer import mustbe_deferred
+from twisted.internet import defer, reactor
 
 
 def f(x):

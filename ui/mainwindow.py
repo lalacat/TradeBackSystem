@@ -8,8 +8,8 @@ from importlib import import_module
 from typing import Callable
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from vnpy.event import EventEngine
+
 from .widget import (
     TickMonitor,
     OrderMonitor,

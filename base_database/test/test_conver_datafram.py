@@ -1,11 +1,8 @@
-import pandas as pd
 from datetime import datetime
 
-from backtesting.Indicator.test_plotitem import ChartLineWidget
 from base_database.initialize import database_manager
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-from ui import create_qapp
 
 s = Settings()
 

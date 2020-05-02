@@ -1,11 +1,9 @@
 
 from datetime import datetime
 
-from PyQt5 import QtCore, QtGui,QtWidgets
-
 from base_database.database_mongo import init
 from base_utils.constant import Exchange, Interval
-from chart import VolumeItem, ChartWidget, CandleItem
+from chart import ChartWidget
 from chart.item import LineItem
 from chart.manager import LineManager
 from settings.setting import Settings

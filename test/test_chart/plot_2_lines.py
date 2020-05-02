@@ -1,18 +1,10 @@
-
-import pprint
 from datetime import datetime
 
-from base_database.database_mongo import init, MongoManager
-from base_utils.constant import Exchange, Interval
-from settings.setting import Settings
-from PyQt5 import QtCore
-import pyqtgraph as pg
+from base_database.database_mongo import MongoManager
 from base_database.database_mongo import init
 from base_utils.constant import Exchange, Interval
-from chart import VolumeItem, ChartWidget, CandleItem
 from settings.setting import Settings
-from ui import create_qapp
-import pandas as pd
+
 # 读取数据
 
 s = Settings()

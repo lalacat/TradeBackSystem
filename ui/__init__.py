@@ -3,8 +3,8 @@ import platform
 import sys
 import traceback
 
-import qdarkstyle
-from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5 import QtGui, QtWidgets
+
 
 # from .mainwindow import MainWindow
 

@@ -1,17 +1,9 @@
-import random
 from datetime import datetime
-from pprint import pprint
-
-from PyQt5 import QtGui
-import pyqtgraph as pg
 
 from backtesting.backtesting import BacktestingEngine
 from backtesting.strategies.double_ma_strategy import DoubleMaStrategy
 from settings.setting import Settings
 from ui import create_qapp
-
-
-
 
 setting = {}  # ATR窗口
 

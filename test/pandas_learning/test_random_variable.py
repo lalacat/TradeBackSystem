@@ -3,10 +3,7 @@ from datetime import datetime
 from base_database.database_mongo import init
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy import stats
-import numpy as np
+
 s = Settings()
 
 dbm = init('_',s)

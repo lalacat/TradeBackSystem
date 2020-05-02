@@ -1,16 +1,11 @@
-import tushare as ts
 from datetime import datetime
 
-from scipy import  stats
-from statsmodels.stats import anova
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 from base_database.database_mongo import init
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-import matplotlib.pyplot as plt
-import pandas as pd
-import statsmodels.api as sm
-
 
 s = Settings()
 

@@ -1,10 +1,9 @@
 import pprint
 from datetime import datetime
 
-from base_database.database_mongo import init, MongoManager, DbBarData
+from base_database.database_mongo import init, MongoManager
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-
 
 s = Settings()
 init('a',s)

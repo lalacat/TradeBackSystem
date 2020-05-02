@@ -1,13 +1,11 @@
-import pandas as pd
 from datetime import datetime
+
+import pandas as pd
+import pyqtgraph as pg
 
 from base_database.initialize import database_manager
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-import pyqtgraph as pg
-from PyQt5 import QtCore
-
-import matplotlib.pyplot as plt #提供类matlab里绘图框架
 
 s = Settings()
 start = datetime(2018, 9, 1)

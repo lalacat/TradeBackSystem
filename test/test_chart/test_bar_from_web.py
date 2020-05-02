@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
 
+from collections import deque
+from datetime import datetime
+from functools import partial
+
+# 其他
+import numpy as np
+import pandas as pd
+# from uiCrosshair import Crosshair
+import pyqtgraph as pg
 # Qt相关和十字光标
 # import Crosshair as Crosshair
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QFont
-# from uiCrosshair import Crosshair
-import pyqtgraph as pg
-# 其他
-import numpy as np
-import pandas as pd
-from functools import partial
-from datetime import datetime, timedelta
-from collections import deque
-
 # 字符串转换
 # ---------------------------------------------------------------------------------------
 from PyQt5.QtWidgets import QApplication

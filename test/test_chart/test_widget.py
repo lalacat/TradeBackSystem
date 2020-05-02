@@ -1,23 +1,18 @@
 from collections import deque
+from datetime import datetime
 from functools import partial
 
+import numpy as np
+import pandas as pd
+import pyqtgraph as pg
+import tushare as ts
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QFont
 
 from base_database.database_mongo import init, MongoManager
 from base_utils.constant import Interval, Exchange
-
-from PyQt5 import QtWidgets, QtCore, QtGui
-import tushare as ts
-import pyqtgraph as pg
-import sys
-from datetime import datetime
-import traceback
-import numpy as np
-import pandas as pd
-
 # 主窗口类
 from settings.setting import Settings
-from ui import create_qapp
 
 token = 'bfbf67e56f47ef62e570fc6595d57909f9fc516d3749458e2eb6186a'
 pro = ts.pro_api(token)

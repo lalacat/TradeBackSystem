@@ -1,10 +1,12 @@
-
-import sys
 import tushare as ts
 import pandas as pd
 import os
 from PyQt5 import QtWidgets, QtCore, QtGui
+import os
 
+import pandas as pd
+import tushare as ts
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 
 class report_painter:
@@ -561,7 +563,6 @@ class TimeLine(QtWidgets.QWidget):
 # 功能测试
 ########################################################################
 if __name__ == '__main__':
-    import sys
     app = QtWidgets.QApplication([])
     dt = TimeLine(code='600519', ktype='D', name=u'贵州茅台')
     dt.show()

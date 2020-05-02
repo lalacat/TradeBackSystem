@@ -1,8 +1,6 @@
 from datetime import datetime
 
-import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 from base_database.database_mongo import init
 from base_utils.constant import Exchange, Interval

@@ -1,8 +1,8 @@
 from collections import defaultdict
+from queue import Empty, Queue
 
-from twisted.internet import defer, reactor, task
 import tushare as ts
-from queue import Empty,Queue
+from twisted.internet import reactor, task
 
 from twisted_frame.utils.defer import mustbe_deferred
 from twisted_frame.utils.reactor import CallLaterOnce

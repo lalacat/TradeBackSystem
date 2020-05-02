@@ -9,8 +9,8 @@ from typing import Callable
 import numpy as np
 import talib
 
-from .object import BarData, TickData
 from .constant import Exchange, Interval
+from .object import BarData, TickData
 
 
 def extract_vt_symbol(vt_symbol: str):

@@ -1,4 +1,4 @@
-from base_database.database import BaseDatabaseManager, Driver
+from base_database.database import BaseDatabaseManager
 from base_database.database_mongo import init
 from settings.setting import Settings
 

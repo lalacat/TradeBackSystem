@@ -2,14 +2,15 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Sequence
 
-from mongoengine import DateTimeField, Document, FloatField, StringField, connect,ListField
+import pandas as pd
+from mongoengine import DateTimeField, Document, FloatField, StringField, connect, ListField
 from pymongo.errors import OperationFailure
 
 from base_database.database import Driver, BaseDatabaseManager
 from base_utils.constant import Exchange, Interval
 from base_utils.object import BarData, TickData
 from settings.setting import Settings
-import pandas as pd
+
 
 # 根据Settings文件连接数据库
 def init(_:Driver,settings:Settings):
@@ -50,6 +51,83 @@ def init(_:Driver,settings:Settings):
 
 # 数据结构
 class DbBarData(Document):
+    """
+    Candlestick bar data for database storage.
+
+    Index is defined unique with datetime, interval, symbol
+    """
+
+    symbol: str = StringField()
+    exchange: str = StringField()
+    datetime: datetime = DateTimeField()
+    interval: str = StringField()
+
+    volume: float = FloatField()
+    open_price: float = FloatField()
+    open_interest: float = FloatField()
+    high_price: float = FloatField()
+    low_price: float = FloatField()
+    close_price: float = FloatField()
+
+    build_time: datetime = DateTimeField()
+    remove_time:datetime = DateTimeField()
+
+    # 在集合上指定索引以加快查询速度。这是通过创建indexes在
+    # meta字典中调用的索引规范列表完成的，
+    # 其中索引规范可以是单个字段名称，
+    # 包含多个字段名称的元组或包含完整索引定义的字典。
+    meta = {
+        "indexes": [
+            {
+                "fields": ("datetime", "interval", "symbol", "exchange"),
+                "unique": True,
+            }
+        ]
+    }
+
+    @staticmethod
+    def from_bar(bar: BarData):
+        """
+        Generate DbBarData object from BarData.
+        """
+        db_bar = DbBarData()
+
+        db_bar.symbol = bar.symbol
+        db_bar.exchange = bar.exchange.value
+        db_bar.datetime = bar.datetime
+        db_bar.interval = bar.interval.value
+        db_bar.volume = bar.volume
+        db_bar.open_price = bar.open_price
+        db_bar.high_price = bar.high_price
+        db_bar.low_price = bar.low_price
+        db_bar.close_price = bar.close_price
+        db_bar.open_interest = bar.open_interest
+        db_bar.build_time = bar.build_time
+        db_bar.remove_time = bar.remove_time
+        return db_bar
+
+    def to_bar(self):
+        """
+        Generate BarData object from DbBarData.
+        """
+        bar = BarData(
+            symbol=self.symbol,
+            exchange=Exchange(self.exchange),
+            datetime=self.datetime,
+            interval=Interval(self.interval),
+            volume=self.volume,
+            open_price=self.open_price,
+            open_interest=self.open_interest,
+            high_price=self.high_price,
+            low_price=self.low_price,
+            close_price=self.close_price,
+            build_time = self.build_time,
+            remove_time = self.remove_time,
+            gateway_name="DB",
+        )
+        return bar
+
+class DbBarDataFq(Document):
     """
     Candlestick bar data for database storage.
 
@@ -290,16 +368,28 @@ class MongoManager(BaseDatabaseManager):
         interval: Interval,
         start: datetime,
         end: datetime,
+        adj:bool = False
     ) -> Sequence[BarData]:
-        s = DbBarData.objects(
-            symbol=symbol,
-            exchange=exchange.value,
-            interval=interval.value,
-            datetime__gte=start,
-            datetime__lte=end,
-        )
-        data = [db_bar.to_bar() for db_bar in s]
-        return data
+        if adj:
+            s = DbBarDataFq.objects(
+                symbol=symbol,
+                exchange=exchange.value,
+                interval=interval.value,
+                datetime__gte=start,
+                datetime__lte=end,
+            )
+            data = [db_bar.to_bar() for db_bar in s]
+            return data
+        else:
+            s = DbBarData.objects(
+                symbol=symbol,
+                exchange=exchange.value,
+                interval=interval.value,
+                datetime__gte=start,
+                datetime__lte=end,
+            )
+            data = [db_bar.to_bar() for db_bar in s]
+            return data
 
     def load_bar_dataframe_data(
         self,
@@ -307,15 +397,26 @@ class MongoManager(BaseDatabaseManager):
         exchange: Exchange,
         interval: Interval,
         start: datetime,
-        end: datetime) -> pd.DataFrame:
+        end: datetime,
+        adj: bool = False
+    ) -> pd.DataFrame:
         result = None
-        s = DbBarData.objects(
-            symbol=symbol,
-            exchange=exchange.value,
-            interval=interval.value,
-            datetime__gte=start,
-            datetime__lte=end,
-        )
+        if adj:
+            s = DbBarDataFq.objects(
+                symbol=symbol,
+                exchange=exchange.value,
+                interval=interval.value,
+                datetime__gte=start,
+                datetime__lte=end,
+            )
+        else:
+            s = DbBarData.objects(
+                symbol=symbol,
+                exchange=exchange.value,
+                interval=interval.value,
+                datetime__gte=start,
+                datetime__lte=end,
+            )
         for bar in s:
             if result is None:
                 result = pd.DataFrame(
@@ -362,16 +463,24 @@ class MongoManager(BaseDatabaseManager):
             for k, v in d.__dict__.items()
         }
 
-    def save_bar_data(self, datas: Sequence[BarData]):
+    def save_bar_data(self, datas: Sequence[BarData],adj=False):
         for d in datas:
             updates = self.to_update_param(d)
             updates.pop("set__gateway_name")
             updates.pop("set__vt_symbol")
-            (
-                DbBarData.objects(
+            if adj:
+                (
+                    DbBarDataFq.objects(
                     symbol=d.symbol, interval=d.interval.value, datetime=d.datetime
-                ).update_one(upsert=True, **updates)
-            )
+                    ).update_one(upsert=True, **updates)
+                )
+            else:
+                (
+                    DbBarData.objects(
+                        symbol=d.symbol, interval=d.interval.value, datetime=d.datetime
+                    ).update_one(upsert=True, **updates)
+                )
+
 
     def save_tick_data(self, datas: Sequence[TickData]):
         for d in datas:
@@ -385,13 +494,20 @@ class MongoManager(BaseDatabaseManager):
             )
 
     def get_newest_bar_data(
-        self, symbol: str, exchange: "Exchange", interval: "Interval"
+        self, symbol: str, exchange: "Exchange", interval: "Interval",adj=False
     ) -> Optional["BarData"]:
-        s = (
-            DbBarData.objects(symbol=symbol, exchange=exchange.value)
-            .order_by("-datetime")
-            .first()
-        )
+        if adj:
+            s = (
+                DbBarDataFq.objects(symbol=symbol, exchange=exchange.value)
+                    .order_by("-datetime")
+                    .first()
+            )
+        else:
+            s = (
+                DbBarData.objects(symbol=symbol, exchange=exchange.value)
+                .order_by("-datetime")
+                .first()
+            )
         if s:
             return s.to_bar()
         return None
@@ -411,50 +527,7 @@ class MongoManager(BaseDatabaseManager):
     def clean(self, symbol: str):
         DbTickData.objects(symbol=symbol).delete()
         DbBarData.objects(symbol=symbol).delete()
-
-
-class Test(Document):
-
-    sold_unitPrice:str = StringField()
-    sold_address:str = StringField()
-    community_name:str = StringField()
-    # sold_dealDate:str = ListField()
-    # sold_totalPrice:str = ListField()
-    # sold_saleonborad:str = ListField()
-    # sold_positionInfo:str = ListField()
-    # sold_dealcycle:str = ListField()
-
-    meta = {
-    }
-    # @staticmethod
-    def _set_name(self,name):
-        # t = Test()
-        self._meta['collection'] = name
-        # t.sold_unitPrice = '1000'
-        # t.community_name = 'Lala'
-        # t.community_name = 'Bibi'
+        DbBarDataFq.objects(symbol=symbol).delete()
 
 
 
-
-
-class Task_anshan(Document):
-    community_name:str = StringField()
-    community_url:str = StringField()
-    community_sale_num:str = ListField()
-    community_rent_num:str = ListField()
-    community_onsale_num:str = ListField()
-    community_bulid_year:str = StringField()
-    community_avr_price:str = ListField()
-    # sold_dealcycle:str = ListField()
-
-    def to_print(self):
-        """
-        Generate BarData object from DbBarData.
-        """
-        print(self)
-
-    def __str__(self):
-        return '%s:%s' %(self.community_name,self.community_url)
-
-    __repr__ = __str__

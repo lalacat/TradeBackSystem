@@ -1,17 +1,18 @@
-import pprint
 from datetime import datetime, timedelta
 
+import pandas as pd
 from chinese_calendar import is_holiday
 
 from base_database.database_mongo import init
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-import pandas as pd
-
 
 s = Settings()
 dbm = init('_',s)
 
+'''
+计算周波动率
+'''
 
 # 获得一年的周
 start_day = datetime(2019, 1, 1)

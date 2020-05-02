@@ -1,13 +1,9 @@
-from settings.setting import Settings
-import tushare as ts
-import tushare as ts
-import pandas as pd
 import datetime as dt
 
-from base_database.database_mongo import init, DbBarData
+import tushare as ts
+
 from base_utils.constant import Exchange, Interval
 from base_utils.object import BarData
-from settings.setting import Settings
 
 token = 'bfbf67e56f47ef62e570fc6595d57909f9fc516d3749458e2eb6186a'
 
@@ -34,10 +30,10 @@ def generate_bar_from_row(row, symbol, exchange):
 ts_code = '002192.SZ'
 startday = '20190603'
 pro = ts.pro_api(token)
-# df = pro.daily(ts_code=ts_code, start_date=startday)
+# df = pro.daily(ts_code=ts_code, start_date='20180701', end_date='20180718')
 
-df = pro.index_dailybasic()
-df = pro.index_dailybasic(trade_date='20181018', fields='ts_code,trade_date,turnover_rate,pe')
+# df = pro.index_dailybasic()
+df = ts.pro_bar(ts_code=ts_code, adj='qfq', start_date='20180101', end_date='20181011')
 
 print(df)
 

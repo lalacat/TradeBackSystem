@@ -1,21 +1,17 @@
-import datetime
+from collections import defaultdict
 from collections import defaultdict
 from typing import List, Dict, Type
 
 import pyqtgraph as pg
-
-from PyQt5 import QtWidgets, QtGui,QtCore
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QGraphicsTextItem
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 from base_utils.object import BarData
-from .manager import BarManager
+from .axis import DatetimeAxis
 from .base import (
     GREY_COLOR, WHITE_COLOR, CURSOR_COLOR, BLACK_COLOR,
-    to_int, NORMAL_FONT,
-    UP_LINE_COLOR)
-from .axis import DatetimeAxis
-from .item import ChartItem, VolumeItem, CandleItem, LineItem
+    to_int, NORMAL_FONT)
+from .item import ChartItem, CandleItem
+from .manager import BarManager
 
 pg.setConfigOptions(antialias=True)
 

@@ -1,4 +1,6 @@
-
+import pandas as pd
+import numpy as np
+import xlrd
 # 标：代码
 stocks_TMT = {
     # 通讯
@@ -25,3 +27,37 @@ stocks_TMT = {
     '中新赛克':('002912.SZ','20191127'),
     '易华录'  :('300212.SZ','20191127')
 }
+
+
+"""
+从东方财富导出的excel中读取代码
+写入csv文件
+重塑列名
+"""
+path = 'C:\\Users\\scott\\Desktop\\bank.xls'
+csv_name = 'bankcode.csv'
+datas = pd.read_excel(path,header=None)
+
+codes = datas.iloc[2:,1:3]
+result = []
+for values in np.array(codes):
+    code= values[0]
+    name = values[1]
+    if '.' not in code:
+        num = int(code)
+        if num < 600000:
+            code = code + '.SZ'
+        else:
+            code = code + '.SH'
+    result.append([name,code])
+
+result = pd.DataFrame(result)
+# print(result)
+# result.to_csv(csv_name,header=None,index=False)
+
+test = pd.read_csv('.\\'+csv_name)
+test.columns = ['name','code']
+
+for index,values in test.iterrows():
+    print(values['code'])
+

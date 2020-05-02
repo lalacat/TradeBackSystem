@@ -3,13 +3,13 @@ Basic widgets for VN Trader.
 """
 
 import csv
+from copy import copy
 from enum import Enum
 from typing import Any
-from copy import copy
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from vnpy.event import Event, EventEngine
+
 from ..constant import Direction, Exchange, Offset, OrderType
 from ..engine import MainEngine
 from ..event import (
@@ -21,9 +21,8 @@ from ..event import (
     EVENT_LOG
 )
 from ..object import OrderRequest, SubscribeRequest
-from ..utility import load_json, save_json
 from ..setting import SETTING_FILENAME, SETTINGS
-
+from ..utility import load_json, save_json
 
 COLOR_LONG = QtGui.QColor("red")
 COLOR_SHORT = QtGui.QColor("green")

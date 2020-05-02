@@ -1,8 +1,6 @@
-import time
-
-from twisted.internet import defer, reactor, task
 import logging
 
+from twisted.internet import defer, reactor, task
 from twisted.python import failure
 
 logger = logging.getLogger(__name__)

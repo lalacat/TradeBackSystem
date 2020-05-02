@@ -1,10 +1,17 @@
 from datetime import datetime
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
 from base_database.database_mongo import init
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-import matplotlib.pyplot as plt
-import pandas as pd
+
+"""
+股票的日收益计算
+包含日收益图
+"""
+
 s = Settings()
 
 dbm = init('_',s)

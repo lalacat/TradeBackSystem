@@ -1,16 +1,13 @@
 from abc import abstractmethod
 from collections import defaultdict
-from datetime import datetime
 from typing import List, Dict, Tuple
 
 import pyqtgraph as pg
 from PyQt5 import QtGui, QtCore, QtWidgets
-from pandas import DataFrame
 
-from base_utils.constant import Direction, Offset
-from base_utils.object import BarData, TradeData
-from .base import UP_COLOR, DOWN_COLOR, PEN_WIDTH, BAR_WIDTH, UP_LINE_COLOR, DOWN_LINE_COLOR, COLOR_GROUP, WHITE_COLOR, \
-    OPEN_COLOR, CLOSE_COLOR
+from base_utils.constant import Offset
+from base_utils.object import BarData
+from .base import UP_COLOR, DOWN_COLOR, PEN_WIDTH, BAR_WIDTH, COLOR_GROUP, OPEN_COLOR, CLOSE_COLOR
 from .manager import BarManager
 
 

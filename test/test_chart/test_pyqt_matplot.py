@@ -1,8 +1,9 @@
 import sys
-import numpy as np
+
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FC
+import numpy as np
 from PyQt5.QtWidgets import QApplication, QPushButton, QMainWindow, QVBoxLayout, QWidget
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FC
 
 
 class QtDraw(QMainWindow):

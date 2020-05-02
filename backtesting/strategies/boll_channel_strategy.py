@@ -1,14 +1,10 @@
 
 from collections import defaultdict
-from datetime import datetime
 
 from backtesting.template import CtaTemplate
 from base_utils.base import StopOrder
-from base_utils.object import TickData, BarData, OrderData, TradeData
-from base_utils.utility import BarGenerator, ArrayManager
-
-import pyqtgraph as pg
-
+from base_utils.object import TickData, OrderData, TradeData
+from base_utils.utility import ArrayManager
 from chart import ChartWidget, CandleItem, VolumeItem
 from settings.setting import Settings
 from ui import create_qapp

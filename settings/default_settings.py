@@ -3,15 +3,15 @@
 #  D
 #  DATABASE
 DATABASE_DRIVER = 'mongodb'
-DATABASE_DATABASE = "test"  # for sqlite, use this as filepath
+DATABASE_DATABASE = "stock"  # for sqlite, use this as filepath
 # DATABASE_HOST = "47.105.165.81"
-DATABASE_HOST = "127.0.0.1"
+DATABASE_HOST = "192.168.50.225"
 
 # DATABASE_PORT = 27170
 DATABASE_PORT = 27017
-# DATABASE_USER = 'test'
-# DATABASE_PASSWORD = 'test123'
-# DATABASE_AUTH = "LianJia"
+DATABASE_USER = 'stock'
+DATABASE_PASSWORD = 'stock'
+DATABASE_AUTH = "stock"
 
 
 # E

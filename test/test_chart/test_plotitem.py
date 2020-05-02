@@ -1,11 +1,7 @@
-from collections import defaultdict
-from typing import List, Dict, Type
+from typing import List, Dict
 
 import pyqtgraph as pg
-
-from PyQt5 import QtWidgets, QtGui,QtCore
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QGraphicsTextItem
+from PyQt5 import QtWidgets, QtGui
 
 from chart.base import GREY_COLOR, AXIS_WIDTH, NORMAL_FONT
 

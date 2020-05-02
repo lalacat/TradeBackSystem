@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import pandas as pd
-
 from base_database.database_mongo import init
 from base_utils.constant import Exchange, Interval
 from settings.setting import Settings

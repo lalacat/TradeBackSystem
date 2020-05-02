@@ -8,7 +8,6 @@ from base_utils.object import BarData, TickData, OrderData, TradeData
 from base_utils.utility import virtual
 
 
-
 class CtaTemplate(ABC):
     """"""
 

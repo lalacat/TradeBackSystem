@@ -4,8 +4,8 @@ from typing import List
 import pyqtgraph as pg
 
 from base_utils.constant import Interval
-from .manager import BarManager, LineManager
 from .base import AXIS_WIDTH, NORMAL_FONT
+from .manager import BarManager, LineManager
 
 
 class DatetimeAxis(pg.AxisItem):

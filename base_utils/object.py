@@ -88,12 +88,13 @@ class BarData(BaseData):
     interval: Interval = None
     volume: float = 0
     open_interest: float = 0
+
     open_price: float = 0
     high_price: float = 0
     low_price: float = 0
     close_price: float = 0
 
-    build_time :datetime =  None
+    build_time :datetime = None
     remove_time :datetime= None
 
     def __post_init__(self):

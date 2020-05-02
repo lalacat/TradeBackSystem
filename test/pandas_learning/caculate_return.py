@@ -1,26 +1,32 @@
-import tushare as ts
 from datetime import datetime
 
-from scipy import  stats
-from statsmodels.stats import anova
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 from base_database.database_mongo import init
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
-import pandas as pd
-import matplotlib.pyplot as plt
-import statsmodels.api as sm
-import numpy as np
+
+"""
+单期收益率
+多期收益率
+"""
+
 
 s = Settings()
 
 dbm = init('_',s)
-start = datetime(2019, 11, 23)
-end = datetime(2019, 11, 28)
+start = datetime(2018, 11, 23)
+end = datetime(2020, 4, 20)
 RJ = dbm.load_bar_dataframe_data(
 '002192',Exchange.SZ , Interval.DAILY, start, end
 )
-print(RJ)
+# print(RJ)
+print(RJ['2018'])
+
+
+
 
 close = RJ['close_price']
 lagclose = close.shift(1)
@@ -29,13 +35,15 @@ Calclose = pd.DataFrame({'close':close,'lagclose':lagclose})
 simpleret = (close-lagclose)/lagclose
 simpleret.name = 'simpleret'
 # print(simpleret.head(5))
-# plt.plot(simpleret)
+
+fig,ax1 = plt.subplots()
+plt.plot(close,'b')
 
 simpleret2=(close-close.shift(2))/close.shift(2)
 simpleret2.name = 'simpleret2'
 # print(simpleret2.head(5))
-
-cum_return = (1+simpleret).cumprod()-1
+ax2 = ax1.twinx()
+cum_return = (1+simpleret).cumprod()
 plt.plot(cum_return)
 
 
@@ -48,7 +56,7 @@ plt.plot(cum_return)
 comporet = np.log(close/lagclose)
 comporet.name = 'comporet'
 print(comporet.head(5))
-# plt.show()
+plt.show()
 # 多期复利
 comporet2 = np.log(close/close.shift(2))
 comporet2.name = 'comporet2'

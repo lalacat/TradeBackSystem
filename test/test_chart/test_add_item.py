@@ -1,12 +1,7 @@
 import sys
-from collections import defaultdict
-from typing import List, Dict, Type
 
 import pyqtgraph as pg
-
-from PyQt5 import QtWidgets, QtGui,QtCore
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QGraphicsTextItem, QTextEdit
+from PyQt5 import QtGui, QtCore
 from pyqtgraph import GraphicsLayout
 
 

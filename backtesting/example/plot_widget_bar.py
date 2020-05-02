@@ -1,17 +1,11 @@
 from datetime import datetime
 
-from PyQt5 import QtCore, QtGui,QtWidgets
-
 from base_database.database_mongo import init
 from base_utils.constant import Exchange, Interval
-from chart import VolumeItem, CandleItem
+from chart import VolumeItem
 from chart.widget_test import ChartWidget
 from settings.setting import Settings
 from ui import create_qapp
-
-
-
-
 
 s = Settings()
 app = create_qapp(s)

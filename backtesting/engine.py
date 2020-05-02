@@ -1,12 +1,11 @@
-import os
 import importlib
+import os
 import traceback
 from datetime import datetime
-from threading import Thread
 from pathlib import Path
+from threading import Thread
 
 from backtesting.backtesting import BacktestingEngine, OptimizationSetting
-from base_database.initialize import database_manager
 from event.test_engine import Event
 
 APP_NAME = "CtaBacktester"

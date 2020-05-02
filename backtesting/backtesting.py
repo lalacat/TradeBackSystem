@@ -1,22 +1,20 @@
+import multiprocessing
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-from typing import Callable
-from itertools import product
 from functools import lru_cache
-import multiprocessing
+from itertools import product
+from typing import Callable
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FC
-
 from pandas import DataFrame
 
 from base_database.initialize import database_manager
-from base_utils.base import BacktestingMode, StopOrderStatus, StopOrder,STOPORDER_PREFIX,EngineType
+from base_utils.base import BacktestingMode, StopOrderStatus, StopOrder, STOPORDER_PREFIX, EngineType
 from base_utils.constant import Direction, Status, Interval, Offset, Exchange
 from base_utils.object import OrderData, TradeData, TickData, BarData
 from base_utils.utillibs import round_to_pricetick
-
 
 
 class OptimizationSetting:

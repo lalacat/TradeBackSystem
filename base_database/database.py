@@ -1,12 +1,10 @@
 from abc import abstractmethod, ABC
-from enum import Enum
 from datetime import datetime
 from enum import Enum
-import pandas as pd
-
-
 # 提供基础设定，及基础的抽象方法
 from typing import Optional, Sequence
+
+import pandas as pd
 
 
 class Driver(Enum):

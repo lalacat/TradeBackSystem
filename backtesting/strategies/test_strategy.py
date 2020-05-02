@@ -1,3 +1,5 @@
+from time import time
+
 from vnpy.app.cta_strategy import (
     CtaTemplate,
     StopOrder,
@@ -6,8 +8,6 @@ from vnpy.app.cta_strategy import (
     TradeData,
     OrderData
 )
-
-from time import time
 
 
 class TestStrategy(CtaTemplate):

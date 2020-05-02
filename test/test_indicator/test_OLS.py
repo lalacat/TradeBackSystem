@@ -1,41 +1,70 @@
+import matplotlib.pyplot as plt  # python matplotlib 绘图
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-from scipy import optimize		# 最小二乘法拟合
-import matplotlib.pyplot as plt 	# python matplotlib 绘图
 import pandas as pd;
 
-# Z=(S + s*n*100)/(n*100+N)
-S = 22.143
-N = 8000
+from datetime import datetime
+from scipy import stats
+import statsmodels.api as sm
+from base_database.database_mongo import init
+from base_utils.constant import Interval, Exchange
+from settings.setting import Settings
+"""
+最小二乘法的实现
+立讯和歌尔收益率的拟合
+作图
+坐标按时间截取
+线性，正态性，同方差性
+"""
+s = Settings()
 
-p_start = 1840
-delat_p = 10
-p_end = 1870
-# p = range(p_start,p_end,delat_p)
-# p = pd.DataFrame(np.array(range(p_start,p_end,delat_p)))/100
+dbm = init('_',s)
+start = datetime(2019, 1, 1)
+end = datetime(2020, 3, 30)
+LX = dbm.load_bar_dataframe_data('002475',Exchange.SZ , Interval.DAILY, start, end,True)
+GE = dbm.load_bar_dataframe_data('002241',Exchange.SZ , Interval.DAILY, start, end,True)
 
-p0 = np.arange(p_start,p_end,delat_p)/100
-p = p0.reshape(1,3)
-print(p)
-
-n0 =np.arange(1,5)*100
-# delat_n = 100
-n = n0.reshape(1,4).T
-toltal_volums = n + N
-# print(toltal_volums)
-z = np.dot(n,p)+S*N
-# print(len(z))
-
-
-len_volunm = len(toltal_volums)
-len_price = len(p)
-result = list()
-for i in range(4):
-    print(list(n0))
-    temp = pd.DataFrame(z[i]/toltal_volums[i],columns=[toltal_volums[i]],index=[p0])
-    result.append(temp)
+LX['return'] = LX['close_price'].pct_change()
+GE['return'] = GE['close_price'].pct_change()
+print(GE['return'].tail(3))
+LX = LX.dropna()
+GE = GE.dropna()
+# print(LX)
+# print(GE)
+# print(GE.index)
+# 构建模型
+model = sm.OLS(GE['return'],sm.add_constant(LX['return'])).fit()
+# print(model.summary())
+# 拟合参数的预测值
+# print(model.fittedvalues)
 
 
-r = pd.concat(result,axis=1)
-r.plot()
+'''
+# 拟合值和实际值的对比
+plt.plot(LX['return'],GE['return'],'o', label='data')
+plt.plot(LX['return'],model.fittedvalues,'r--.',label='OLS')
+plt.plot(GE.index,GE['return'],'o', label='data')
+plt.plot(GE.index,model.fittedvalues,'r--.',label='OLS')
+# plt.legend()
+# plt.axis((datetime(2019,3,30),datetime(2019,6,30),-0.25,0.25))
+'''
+
+'''
+# 线性
+plt.scatter(model.fittedvalues,model.resid)
+plt.xlabel('fittedvalues')
+plt.ylabel('resid')
+plt.show()
+'''
+
+"""
+# 正态性
+# Residuals, normalized to have unit variance.残差正态化
+sm.qqplot(model.resid_pearson,stats.norm,line='45')
+plt.show()
+"""
+
+# 同方差
+plt.scatter(model.fittedvalues,model.resid_pearson**0.5)
+plt.xlabel('fittedvalues')
+plt.ylabel('normalize resid')
 plt.show()
