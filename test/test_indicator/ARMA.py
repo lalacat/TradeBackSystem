@@ -26,17 +26,17 @@ dbm = init('_',s)
 start = datetime(2019, 1, 1)
 end = datetime(2020, 4, 24)
 
-GX = dbm.load_bar_dataframe_data(
-'300251',Exchange.SZ , Interval.DAILY, start, end
+PN = dbm.load_bar_dataframe_data(
+'000001',Exchange.SZ , Interval.DAILY, start, end
 )
 
 # print(len(GX))
 
-returns = getReturn(['300251.SZ'],start,end)
-# print(returns.head(3))
-
-RerTrain = returns[:-3]
-# print(RerTrain.tail())
+# returns = getReturn(['300251.SZ'],start,end)
+# # print(returns.head(3))
+#
+# RerTrain = returns[:-3]
+# # print(RerTrain.tail())
 
 
 
@@ -80,7 +80,7 @@ t统计量小于临界值，拒绝原假设，判断序列是平稳的
 # model3 = arima_model.ARMA(RerTrain,order=(2,0,1)).fit()
 # model4 = arima_model.ARMA(RerTrain,order=(2,0,2)).fit()
 # model5 = arima_model.ARMA(RerTrain,order=(3,0,1)).fit()
-model6 = arima_model.ARMA(RerTrain,order=(3,0,2)).fit()
+# model6 = arima_model.ARMA(RerTrain,order=(3,0,2)).fit()
 """
 # print(model1.aic)
 # print(model2.aic)

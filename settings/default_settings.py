@@ -26,3 +26,6 @@ EVENT_LOG = "eLog"
 # F
 FONT_FAMILY= "Arial"
 FONT_SIZE = 12
+
+# P
+PATH_BANK = 'X:\\Python\\TradeBackSystem\\backtesting\\example\\stockcode\\bankcode.csv'
