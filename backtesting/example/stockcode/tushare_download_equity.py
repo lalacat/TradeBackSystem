@@ -87,8 +87,8 @@ class DownloadData(object):
 if __name__ == "__main__":
     s = Settings()
     dd = DownloadData(s)
-    start_day = '20180101'
-    end_day = '20200429'
+    start_day = '20200430'
+    end_day = '20200520'
     # build_day = '20200424'
     file_path = s['PATH_BANK']
     codes = pd.read_csv(file_path)
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # ]
 
     for code in code_list:
-        dd.download_day_bar(code,start_day,end_day)
+        dd.download_day_bar(code,start_day,end_day,adj=True)
     # dd.download_day_bar('002466.SZ','20190921','20190930') # 天齐
     # dd.download_day_bar('002460.SZ','20190921','20190930') # 赣锋锂业
     # dd.download_day_bar('600276.SH','20170101','20191010') # 恒瑞

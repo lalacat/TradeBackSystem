@@ -9,6 +9,9 @@ import pandas as pd
 """
 计算收益率
 """
+s = Settings()
+dbm = init('_', s)
+
 def annualize(returns,period):
     if period == 1:
         return((1+returns).cumprod()[-1]**(252/len(returns))-1)
@@ -21,7 +24,6 @@ def annualize(returns,period):
     if period == 360:
         return ((1 + returns).cumprod()[-1] ** (1 / len(returns)) - 1)
 
-
 def fillInfNaN(returns,method='ffill'):
     # returns = returns.fillna(method='bfill').round(4)
     returns = returns.dropna().round(4)
@@ -29,8 +31,6 @@ def fillInfNaN(returns,method='ffill'):
     return returns
 
 def getReturn(stocks,startday,endday,peried=1):
-    s = Settings()
-    dbm = init('_',s)
     if isinstance(startday,datetime):
         start_day = startday
     else:
@@ -51,7 +51,6 @@ def getReturn(stocks,startday,endday,peried=1):
         results[code] = (close-lagclose)/lagclose
         # returns = datas.close_price.pct_change().dropna()
         # print('%s: %f' % (code, annualize(returns, 1)))
-
     return fillInfNaN(results)
 
 # code_list = [

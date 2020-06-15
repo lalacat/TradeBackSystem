@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from arch.unitroot import ADF
 
+from backtesting.Indicator.pairTrading.PairTrading import PairTrading
 from backtesting.example.measure.annualize_return import getReturn
 from base_database.database_mongo import init
 from base_utils.constant import Interval, Exchange
@@ -159,5 +160,8 @@ Alternative Hypothesis: The process is weakly stationary.
 不能拒绝原假设，误差太大了
 
 """
-
-plt.show()
+st = PairTrading()
+st.setStock(ZSlog,PAlog)
+alpha,beta = st.cointegration()
+print(alpha,beta)
+# plt.show()

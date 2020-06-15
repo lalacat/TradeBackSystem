@@ -2,15 +2,20 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
+
+from backtesting.Indicator.pairTrading.PairTrading import PairTrading
 from backtesting.example.measure.annualize_return import getReturn
 from base_database.database_mongo import init
 from base_utils.constant import Interval, Exchange
 from settings.setting import Settings
+from itertools import combinations
 '''
+
 读CSV文件
 获取Code
 NAN值填充
 最小距离法筛选两只股票
+排列组合
 '''
 s = Settings()
 
@@ -25,19 +30,22 @@ codes.columns = ['name','code']
 result_list = []
 result_name = []
 
-# # 整合bank的收盘价
-# for index, codes in codes.iterrows():
-#     code,exchange = codes[1].split('.')
-#     result = dbm.load_bar_dataframe_data(
-#         code,Exchange(exchange), Interval.DAILY, start, end
-#         )
-#     result_name.append(code)
-#     result_list.append(result['close_price'])
-# all_banks = pd.concat(result_list,axis=1,keys=result_name)
-# print(all_banks)
-# # fill_banks = all_banks.fillna(method='bfill')
-# fill_banks = all_banks.dropna()
+# 整合bank的收盘价
+for index, codes in codes.iterrows():
+    code,exchange = codes[1].split('.')
+    result = dbm.load_bar_dataframe_data(
+        code,Exchange(exchange), Interval.DAILY, start, end
+        )
+    result_name.append(code)
+    result_list.append(result['close_price'])
+all_banks = pd.concat(result_list,axis=1,keys=result_name)
+# fill_banks = all_banks.fillna(method='bfill')
+fill_banks = all_banks.dropna()
 # print(fill_banks)
+# all_com = [c for c in combinations(fill_banks.columns,2)]
+# print(len(all_com))
+# print(all_com)
+
 #
 # # 计算最小距离
 # def SSD(priceX,priceY):
@@ -64,7 +72,7 @@ result_name = []
 #         ssd = SSD(fill_banks[name_1], fill_banks[name_2])
 #         results.append([name_1+':'+name_2,ssd])
 #     temp = second
-# results_csv = pd.DataFrame(results,columns=['name','ssd'])
+# results_csv = pd.DataFrame(results,columns=['name','ssd']).sort_values(by=['ssd'])
 # results_csv.to_csv('banks_ssd_nan.csv',index=False)
 # print(results_csv)
 
@@ -83,41 +91,48 @@ print(after_sort.head(5))
 430  601860:002936  304.446743
 """
 
-A = dbm.load_bar_dataframe_data(
-'601860',Exchange.SH , Interval.DAILY, start, end
-)
 
-B = dbm.load_bar_dataframe_data(
-'601077',Exchange.SH , Interval.DAILY, start, end
-)
-banks = pd.concat([A['close_price'],B['close_price']],keys=['A','B'],axis=1).dropna()
-print(banks)
-logA = np.log(banks['A'])
-logB = np.log(banks['B'])
+'''
+计算上下边界
+'''
+# A = dbm.load_bar_dataframe_data(
+# '601860',Exchange.SH , Interval.DAILY, start, end
+# )
+#
+# B = dbm.load_bar_dataframe_data(
+# '601077',Exchange.SH , Interval.DAILY, start, end
+# )
+# banks = pd.concat([A['close_price'],B['close_price']],keys=['A','B'],axis=1).dropna()
+# print(banks)
+# logA = np.log(banks['A'])
+# logB = np.log(banks['B'])
+#
+# returnA = (logA - logA.shift(1)) / logA.shift(1)[1:]
+# returnB = (logB - logB.shift(1)) / logB.shift(1)[1:]
+# # 标准化价格
+# standardA = (1+returnA).cumprod()
+# standardB = (1+returnB).cumprod()
+# ssd_pair = standardB - standardA
+# meanSSD_pair = np.mean(ssd_pair)
+# stdSSD_pair = np.std(ssd_pair)
+#
+#
+#
+# up_ssd = meanSSD_pair + 1.5*stdSSD_pair
+# down_ssd = meanSSD_pair - 1.5*stdSSD_pair
+# print(up_ssd)
+# print(down_ssd)
+#
+# st = PairTrading()
+# st.setStock(logA,logB)
+# up_ssd,down_ssd = st.calBound('SSD')
+#
+# print(up_ssd)
+# print(down_ssd)
 
-retA = logA.diff()[1:]
-retB = logB.diff()[1:]
-standardA = (1+retA).cumprod()
-standardB = (1+retB).cumprod()
-# print(standardA)
-# print(standardB)
-ssd_pair = standardB - standardA
-# print(ssd_pair)
-meanSSD_pair = np.mean(ssd_pair)
-stdSSD_pair = np.std(ssd_pair)
-# print(meanSSD_pair)
-# print(stdSSD_pair)
-
-
-up_ssd = meanSSD_pair + 1.2*stdSSD_pair
-down_ssd = meanSSD_pair - 1.2*stdSSD_pair
-print(up_ssd)
-print(down_ssd)
-
-
-ssd_pair.plot()
-plt.axhline(y=meanSSD_pair,color='black')
-plt.axhline(y=up_ssd,color='green')
-plt.axhline(y=down_ssd,color='green')
-plt.xlim((datetime(2019,11,1),datetime(2019,12,1)))
-plt.show()
+# ssd_pair.plot()
+# plt.axhline(y=meanSSD_pair,color='black')
+# plt.axhline(y=up_ssd,color='green')
+# plt.axhline(y=down_ssd,color='green')
+# plt.xlim((datetime(2019,11,1),datetime(2019,12,1)))
+# plt.show()
