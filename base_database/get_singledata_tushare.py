@@ -33,7 +33,7 @@ pro = ts.pro_api(token)
 # df = pro.daily(ts_code=ts_code, start_date='20180701', end_date='20180718')
 
 # df = pro.index_dailybasic()
-df = ts.pro_bar(ts_code=ts_code, adj='qfq', start_date='20180101', end_date='20181011')
+df = ts.pro_bar(ts_code=ts_code, adj='qfq', start_date='20180101',)
 
 print(df)
 

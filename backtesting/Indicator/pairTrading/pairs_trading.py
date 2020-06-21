@@ -95,44 +95,44 @@ print(after_sort.head(5))
 '''
 计算上下边界
 '''
-# A = dbm.load_bar_dataframe_data(
-# '601860',Exchange.SH , Interval.DAILY, start, end
-# )
-#
-# B = dbm.load_bar_dataframe_data(
-# '601077',Exchange.SH , Interval.DAILY, start, end
-# )
-# banks = pd.concat([A['close_price'],B['close_price']],keys=['A','B'],axis=1).dropna()
-# print(banks)
-# logA = np.log(banks['A'])
-# logB = np.log(banks['B'])
-#
-# returnA = (logA - logA.shift(1)) / logA.shift(1)[1:]
-# returnB = (logB - logB.shift(1)) / logB.shift(1)[1:]
-# # 标准化价格
-# standardA = (1+returnA).cumprod()
-# standardB = (1+returnB).cumprod()
-# ssd_pair = standardB - standardA
-# meanSSD_pair = np.mean(ssd_pair)
-# stdSSD_pair = np.std(ssd_pair)
-#
-#
-#
-# up_ssd = meanSSD_pair + 1.5*stdSSD_pair
-# down_ssd = meanSSD_pair - 1.5*stdSSD_pair
-# print(up_ssd)
-# print(down_ssd)
-#
-# st = PairTrading()
-# st.setStock(logA,logB)
-# up_ssd,down_ssd = st.calBound('SSD')
-#
-# print(up_ssd)
-# print(down_ssd)
+A = dbm.load_bar_dataframe_data(
+'601860',Exchange.SH , Interval.DAILY, start, end
+)
 
-# ssd_pair.plot()
-# plt.axhline(y=meanSSD_pair,color='black')
-# plt.axhline(y=up_ssd,color='green')
-# plt.axhline(y=down_ssd,color='green')
-# plt.xlim((datetime(2019,11,1),datetime(2019,12,1)))
-# plt.show()
+B = dbm.load_bar_dataframe_data(
+'601077',Exchange.SH , Interval.DAILY, start, end
+)
+banks = pd.concat([A['close_price'],B['close_price']],keys=['A','B'],axis=1).dropna()
+print(banks)
+logA = np.log(banks['A'])
+logB = np.log(banks['B'])
+
+returnA = (logA - logA.shift(1)) / logA.shift(1)[1:]
+returnB = (logB - logB.shift(1)) / logB.shift(1)[1:]
+# 标准化价格
+standardA = (1+returnA).cumprod()
+standardB = (1+returnB).cumprod()
+ssd_pair = standardB - standardA
+meanSSD_pair = np.mean(ssd_pair)
+stdSSD_pair = np.std(ssd_pair)
+
+
+
+up_ssd = meanSSD_pair + 1.5*stdSSD_pair
+down_ssd = meanSSD_pair - 1.5*stdSSD_pair
+print(up_ssd)
+print(down_ssd)
+
+st = PairTrading()
+st.setStock(logA,logB)
+up_ssd,down_ssd = st.calBound('SSD')
+
+print(up_ssd)
+print(down_ssd)
+
+ssd_pair.plot()
+plt.axhline(y=meanSSD_pair,color='black')
+plt.axhline(y=up_ssd,color='green')
+plt.axhline(y=down_ssd,color='green')
+plt.xlim((datetime(2019,11,1),datetime(2019,12,1)))
+plt.show()

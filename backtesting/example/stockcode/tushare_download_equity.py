@@ -45,6 +45,7 @@ class DownloadData(object):
             close_price=row["close"],
             volume=row["vol"],
             datetime=self.str2datatime(row['trade_date']),
+
             build_time = self.str2datatime(build_time),
             remove_time =self.str2datatime(remove_time),
             gateway_name="DB"
@@ -87,37 +88,37 @@ class DownloadData(object):
 if __name__ == "__main__":
     s = Settings()
     dd = DownloadData(s)
-    start_day = '20200430'
-    end_day = '20200520'
+    start_day = '20200601'
+    # end_day = '20200520'
     # build_day = '20200424'
-    file_path = s['PATH_BANK']
-    codes = pd.read_csv(file_path)
-    code_list = []
-    for index,code in codes.iterrows():
-        code_list.append(code[1])
+    # file_path = s['PATH_BANK']
+    # codes = pd.read_csv(file_path)
+    # code_list = []
+    # for index,code in codes.iterrows():
+    #     code_list.append(code[1])
+    #
+    # print(code_list)
+    code_list = [
+        '002192.SZ', # 融捷
+        '002466.SZ', # 天齐
+        '002460.SZ', # 赣锋锂业
 
-    print(code_list)
-    # code_list = [
-        # '002192.SZ', # 融捷
-        # '002466.SZ', # 天齐
-        # '002460.SZ', # 赣锋锂业
+        '300618.SZ', # 寒锐
+        '603799.SH', # 华友钴业
         #
-        # '300618.SZ', # 寒锐
-        # '603799.SH', # 华友钴业
-        # #
-        # '002299.SZ', # 圣农
-        # '300433.SZ', # 蓝思
-        # '002475.SZ', # 立讯
-        # '002241.SZ', # 歌尔
-        # '300251.SZ', # 光线
-        # '002739.SZ', # 万达电影
+        '002299.SZ', # 圣农
+        '300433.SZ', # 蓝思
+        '002475.SZ', # 立讯
+        '002241.SZ', # 歌尔
+        '300251.SZ', # 光线
+        '002739.SZ', # 万达电影
 
         # '000300.SH', # 沪深300  I
         # '510050.SH', # 上证50ETF  FD
-    # ]
+    ]
 
     for code in code_list:
-        dd.download_day_bar(code,start_day,end_day,adj=True)
+        dd.download_day_bar(code,start_day,adj=True)
     # dd.download_day_bar('002466.SZ','20190921','20190930') # 天齐
     # dd.download_day_bar('002460.SZ','20190921','20190930') # 赣锋锂业
     # dd.download_day_bar('600276.SH','20170101','20191010') # 恒瑞
