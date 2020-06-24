@@ -1,4 +1,6 @@
 from datetime import time
+
+import openpyxl as openpyxl
 import tushare as ts
 import pandas as pd
 import datetime as dt
@@ -13,20 +15,23 @@ pro = ts.pro_api()
 3.读取估值
 4.读取股价
 '''
+
 def read_code():
     sheets = ['5G科技']
         # ,'自主可控','医疗健康','周期消费']
     result = None
+    # path = r'X:\股票\君临计划.xlsx'
+    path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
     for sheet in sheets:
-        datas = pd.read_excel(r'X:\股票\君临计划.xlsx',sheet_name=sheet,skiprows=2,index_col=1)
+        datas = pd.read_excel(path,sheet_name=sheet,skiprows=2,index_col=1)
     result = datas
-    # print(result)
-    # print(result.columns)
+    print(result.columns)
+    print(len(result.columns))
     old_total_share = result.iloc[:,6]
     codes = result.index
-    print(old_total_share)
+    # print(old_total_share)
     date = result.columns[-1]
-    return codes,date
+    # return datas,codes,date
 
 
     # last_day = result.columns[-2]
@@ -35,7 +40,7 @@ def read_code():
 
 # datas = pd.read_excel(r'C:\Users\scott\Desktop\invest\君临计划.xlsx', sheet_name=0, skiprows=2, index_col=0)
 # print(datas)
-read_code()
+# read_code()
 
 
 
@@ -74,31 +79,44 @@ def download_price(code,startday):
 1.追加新的股价
 2.对比估值变色
 '''
+def writer_data():
+    # path = r'X:\股票\君临计划.xlsx'
+    path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+    workbook = openpyxl.load_workbook(path)
+    sheetnames = workbook.sheetnames
+    print(sheetnames)
+    sheet = workbook[sheetnames[0]]
+    # table = workbook.active
+    print(sheet.title) # 输出表名
+    nrows = sheet.max_row # 获得行数
+    print(nrows)
+    ncolumns = sheet.max_row
+    print(ncolumns)
+    for row in sheet.rows:  # 多行
+        print(row[13].value)
 
-codes,date = read_code()
-print(codes)
-print(date)
-result = pd.DataFrame()
-for code in codes:
-    close_price = download_price(code,date)
-    if result is None:
-        result = close_price
-    else:
-        result = pd.concat([result,close_price],axis=1)
-print(result.swapaxes(0,1))
-
-# result_01 = download_price(codes[0],date)
-# result_02 = download_price(codes[1],date)
-# result = pd.concat([result_01,result_02],axis=1).swapaxes(0,1)
-# print(result)
-# df = pro.daily_basic(ts_code='', trade_date='20180726', fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb')
-# print(df)
-# old_date = '2020:12:19'
-# new_date = dt.datetime.strptime(old_date,'%Y:%m:%d').date()
-# print(new_date)
+read_code()
+writer_data()
 
 
-# TypeError ValueError
+
+# datas,codes,date = read_code()
+# print(codes)
+# print(date)
+# result = pd.DataFrame()
+# for code in codes:
+#     close_price = download_price(code,date)
+#     if result is None:
+#         result = close_price
+#     else:
+#         result = pd.concat([result,close_price],axis=1)
+# result = result.swapaxes(0,1)
+#
+# final = datas.join(result,how='inner')
+#
+# print(final)
+
+
 
 
 
