@@ -16,6 +16,10 @@ pro = ts.pro_api()
 4.读取股价
 '''
 
+# 固定的表头
+# A->M 13列
+# 3行
+
 def read_code():
     sheets = ['5G科技']
         # ,'自主可控','医疗健康','周期消费']
@@ -25,13 +29,13 @@ def read_code():
     for sheet in sheets:
         datas = pd.read_excel(path,sheet_name=sheet,skiprows=2,index_col=1)
     result = datas
-    print(result.columns)
-    print(len(result.columns))
+    # print(result.columns)
+    # print(len(result.columns))
     old_total_share = result.iloc[:,6]
     codes = result.index
     # print(old_total_share)
     date = result.columns[-1]
-    # return datas,codes,date
+    return datas,codes,date
 
 
     # last_day = result.columns[-2]
@@ -84,18 +88,69 @@ def writer_data():
     path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
     workbook = openpyxl.load_workbook(path)
     sheetnames = workbook.sheetnames
-    print(sheetnames)
+    # print(sheetnames)
     sheet = workbook[sheetnames[0]]
-    # table = workbook.active
-    print(sheet.title) # 输出表名
-    nrows = sheet.max_row # 获得行数
-    print(nrows)
-    ncolumns = sheet.max_row
-    print(ncolumns)
-    for row in sheet.rows:  # 多行
-        print(row[13].value)
+    # print(sheet.title) # 输出表名
+    # nrows = sheet.max_row # 获得行数
+    # print(nrows)
+    # ncolumns = sheet.max_row
+    # print(ncolumns)
+    base_columns = 13
+    base_rows = 3
 
-read_code()
+    old_data = read_code()[0]
+    # print(old_dat)
+    old_data_length = len(old_data.columns)
+    print('旧数据的长度:%d'%old_data_length)
+    new_data = pd.read_csv('close_price.csv', index_col=0)
+    new_data_length = len(new_data.columns)
+
+    max_row = len(old_data.index)
+    max_columns = old_data_length + new_data_length
+
+    # 合并收盘价
+    start_row =1
+    start_col = 14
+    before_adjust_end_row = 2
+    before_adjust_end_col = max_columns
+    adjust_end_row = 2
+    try:
+        sheet.unmerge_cells(start_row=1, start_column=14, end_row=2, end_column=14)
+    # sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
+    except ValueError:
+        sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
+
+
+    # i = 0
+    # for row in sheet.iter_rows(min_row=base_rows, min_col=old_data_length+1, max_col=max_columns,max_row=max_row):
+    #     # r = row
+    #     # print(r)
+    #     # cell = row[0]
+    #     # print(cell)
+    #     code = sheet.cell(row=row[0].row,column=2)
+    #     # code = row[0]
+    #     if code.value == '代码':
+    #
+    #         i = 0
+    #         print(row)
+    #         for cell in row:
+    #             cell.value = new_data.columns[i]
+    #             i = i + 1
+
+        # print(row)
+        # print(code.value)
+        # if row[0].row == base_rows:
+        #     # 写入日期
+        #     for cell in row:
+        #         cell.value = i
+        #         i = i+1
+        # else:e)
+    # # for row in sheet.rows:  # 多行
+    # #     print(row[13])
+    # #     print(type(row[13]))
+    # #     i = i+1
+    # workbook.save(path)
+# read_code()
 writer_data()
 
 
@@ -105,17 +160,20 @@ writer_data()
 # print(date)
 # result = pd.DataFrame()
 # for code in codes:
-#     close_price = download_price(code,date)
+#     close_price = download_price(code,'20200608')
 #     if result is None:
 #         result = close_price
 #     else:
-#         result = pd.concat([result,close_price],axis=1)
+#         result = pd.concat([result,close_price],axis=1,sort=False)
 # result = result.swapaxes(0,1)
 #
-# final = datas.join(result,how='inner')
+# result.to_csv('close_price.csv')
 #
-# print(final)
+# final = datas.join(result,how='inner')
 
+# print(result)
+
+# print(result)
 
 
 
