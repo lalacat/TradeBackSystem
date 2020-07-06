@@ -5,6 +5,8 @@ import tushare as ts
 import pandas as pd
 import datetime as dt
 
+from win32com.client import Dispatch
+
 token = 'bfbf67e56f47ef62e570fc6595d57909f9fc516d3749458e2eb6186a'
 ts.set_token(token)
 pro = ts.pro_api()
@@ -24,10 +26,10 @@ def read_code():
     sheets = ['5G科技']
         # ,'自主可控','医疗健康','周期消费']
     result = None
-    # path = r'X:\股票\君临计划.xlsx'
-    path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+    path = r'X:\股票\君临计划.xlsx'
+    # path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
     for sheet in sheets:
-        datas = pd.read_excel(path,sheet_name=sheet,skiprows=2,index_col=1)
+        datas = pd.read_excel(path,sheet_name=sheet,skiprows=1,index_col=1)
     result = datas
     # print(result.columns)
     # print(len(result.columns))
@@ -83,9 +85,15 @@ def download_price(code,startday):
 1.追加新的股价
 2.对比估值变色
 '''
+def just_open(filename):
+    xlApp = Dispatch("Excel.Application")
+    xlApp.Visible = False
+    xlBook = xlApp.Workbooks.Open(filename)
+    xlBook.Save()
+    xlBook.Close()
 def writer_data():
-    # path = r'X:\股票\君临计划.xlsx'
-    path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+    path = r'X:\股票\君临计划.xlsx'
+    # path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
     workbook = openpyxl.load_workbook(path)
     sheetnames = workbook.sheetnames
     # print(sheetnames)
@@ -95,42 +103,56 @@ def writer_data():
     # print(nrows)
     # ncolumns = sheet.max_row
     # print(ncolumns)
+    for row in sheet.iter_rows():
+        result = []
+        for cell in row:
+            if cell.value is not None:
+                result.append(cell.value)
+        print(result)
     base_columns = 13
-    base_rows = 3
+    base_rows = 2
 
     old_data = read_code()[0]
-    # print(old_dat)
+    print(old_data)
     old_data_length = len(old_data.columns)
     print('旧数据的长度:%d'%old_data_length)
     new_data = pd.read_csv('close_price.csv', index_col=0)
     new_data_length = len(new_data.columns)
+    print('新数据的长度:%d'%new_data_length)
 
-    max_row = len(old_data.index)
+    max_row = len(old_data.index)+base_rows
     max_columns = old_data_length + new_data_length
+    print('总数据的长度:%d'%max_columns)
+
 
     # 合并收盘价
     start_row =1
     start_col = 14
+    if old_data_length == base_columns:
+            before_adjust_end_col = base_columns + 1
+    else:
+        before_adjust_end_col = old_data_length
+
     before_adjust_end_row = 2
-    before_adjust_end_col = max_columns
     adjust_end_row = 2
-    try:
-        sheet.unmerge_cells(start_row=1, start_column=14, end_row=2, end_column=14)
-    # sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
-    except ValueError:
-        sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
+    # try:
+    #     if before_adjust_end_col == base_columns + 1 :
+    #         print('不需要解除合并')
+    #     else:
+    #         print('不需要解除合并')
+    #         sheet.unmerge_cells(start_row=1, start_column=14, end_row=1, end_column=before_adjust_end_col)
+    # # sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
+    # except ValueError:
+    #     print('解除合并失败')
+    # finally:
+    #     # 收盘价合并
+    #     print('合并成功')
+    #     sheet.merge_cells(start_row=1, start_column=14, end_row=1, end_column=max_columns)
 
-
-    # i = 0
     # for row in sheet.iter_rows(min_row=base_rows, min_col=old_data_length+1, max_col=max_columns,max_row=max_row):
-    #     # r = row
-    #     # print(r)
-    #     # cell = row[0]
-    #     # print(cell)
     #     code = sheet.cell(row=row[0].row,column=2)
     #     # code = row[0]
     #     if code.value == '代码':
-    #
     #         i = 0
     #         print(row)
     #         for cell in row:
@@ -149,7 +171,8 @@ def writer_data():
     # #     print(row[13])
     # #     print(type(row[13]))
     # #     i = i+1
-    # workbook.save(path)
+    workbook.save(path)
+    just_open(path)
 # read_code()
 writer_data()
 
