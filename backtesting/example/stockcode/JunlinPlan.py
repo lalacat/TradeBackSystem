@@ -26,8 +26,8 @@ def read_code():
     sheets = ['5G科技']
         # ,'自主可控','医疗健康','周期消费']
     result = None
-    path = r'X:\股票\君临计划.xlsx'
-    # path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+    # path = r'X:\股票\君临计划.xlsx'
+    path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
     for sheet in sheets:
         datas = pd.read_excel(path,sheet_name=sheet,skiprows=1,index_col=1)
     result = datas
@@ -92,8 +92,8 @@ def just_open(filename):
     xlBook.Save()
     xlBook.Close()
 def writer_data():
-    path = r'X:\股票\君临计划.xlsx'
-    # path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+    # path = r'X:\股票\君临计划.xlsx'
+    path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
     workbook = openpyxl.load_workbook(path)
     sheetnames = workbook.sheetnames
     # print(sheetnames)
@@ -113,10 +113,12 @@ def writer_data():
     base_rows = 2
 
     old_data = read_code()[0]
-    print(old_data)
+    # print(old_data)
     old_data_length = len(old_data.columns)
     print('旧数据的长度:%d'%old_data_length)
-    new_data = pd.read_csv('close_price.csv', index_col=0)
+    # new_data = pd.read_csv('close_price.csv', index_col=0)
+    new_data = pd.read_csv('close_price_02.csv', index_col=0)
+    # print(new_data.index)
     new_data_length = len(new_data.columns)
     print('新数据的长度:%d'%new_data_length)
 
@@ -133,31 +135,37 @@ def writer_data():
     else:
         before_adjust_end_col = old_data_length
 
-    before_adjust_end_row = 2
-    adjust_end_row = 2
-    # try:
-    #     if before_adjust_end_col == base_columns + 1 :
-    #         print('不需要解除合并')
-    #     else:
-    #         print('不需要解除合并')
-    #         sheet.unmerge_cells(start_row=1, start_column=14, end_row=1, end_column=before_adjust_end_col)
-    # # sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
-    # except ValueError:
-    #     print('解除合并失败')
-    # finally:
-    #     # 收盘价合并
-    #     print('合并成功')
-    #     sheet.merge_cells(start_row=1, start_column=14, end_row=1, end_column=max_columns)
+    try:
+        if before_adjust_end_col == base_columns + 1:
+            print('不需要解除合并')
+        else:
+            print('解除合并')
+            sheet.unmerge_cells(start_row=start_row, start_column=start_col, end_row=start_row, end_column=before_adjust_end_col)
+        # sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
+    except ValueError:
+        print('解除合并失败')
+    finally:
+        # 收盘价合并
+        print('合并成功')
+        sheet.merge_cells(start_row=1, start_column=14, end_row=1, end_column=max_columns)
+    for row in sheet.iter_rows(min_row=base_rows, min_col=old_data_length + 1, max_col=max_columns,
+                               max_row=max_row):
+        code = sheet.cell(row=row[0].row, column=2)
+        code_value = code.value
+        # code = row[0]
+        i = 0
 
-    # for row in sheet.iter_rows(min_row=base_rows, min_col=old_data_length+1, max_col=max_columns,max_row=max_row):
-    #     code = sheet.cell(row=row[0].row,column=2)
-    #     # code = row[0]
-    #     if code.value == '代码':
-    #         i = 0
-    #         print(row)
-    #         for cell in row:
-    #             cell.value = new_data.columns[i]
-    #             i = i + 1
+        if code_value == '代码':
+            for cell in row:
+                cell.value = new_data.columns[i]
+                i = i + 1
+        else:
+            print('写入%s的数据'%code_value)
+            # print(new_data.loc[code_value,new_data.columns[i]])
+            for cell in row:
+                cell.value = new_data.loc[code_value,new_data.columns[i]]
+                i = i + 1
+
 
         # print(row)
         # print(code.value)
@@ -172,7 +180,7 @@ def writer_data():
     # #     print(type(row[13]))
     # #     i = i+1
     workbook.save(path)
-    just_open(path)
+    # just_open(path)
 # read_code()
 writer_data()
 
