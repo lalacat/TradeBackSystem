@@ -1,3 +1,4 @@
+import re
 from datetime import time
 
 import openpyxl as openpyxl
@@ -5,6 +6,7 @@ import tushare as ts
 import pandas as pd
 import datetime as dt
 
+from openpyxl.styles import Alignment,Font
 from win32com.client import Dispatch
 
 token = 'bfbf67e56f47ef62e570fc6595d57909f9fc516d3749458e2eb6186a'
@@ -50,11 +52,6 @@ def read_code():
 
 
 
-
-
-
-
-
 '''
 不同的schema的股价下载
 结果规范
@@ -96,28 +93,27 @@ def writer_data():
     path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
     workbook = openpyxl.load_workbook(path)
     sheetnames = workbook.sheetnames
-    # print(sheetnames)
+    print(sheetnames)
     sheet = workbook[sheetnames[0]]
     # print(sheet.title) # 输出表名
-    # nrows = sheet.max_row # 获得行数
-    # print(nrows)
-    # ncolumns = sheet.max_row
-    # print(ncolumns)
-    for row in sheet.iter_rows():
-        result = []
-        for cell in row:
-            if cell.value is not None:
-                result.append(cell.value)
-        print(result)
+
     base_columns = 13
     base_rows = 2
 
     old_data = read_code()[0]
-    # print(old_data)
-    old_data_length = len(old_data.columns)
+    data_flag = old_data.columns[-1]
+    if re.match('\d{8}',data_flag):
+        print('有新数据的加入')
+        old_data_length = len(old_data.columns) + 1
+    else:
+        print('只有基础数据')
+        old_data_length = base_columns
+    print(old_data.columns)
+
+
     print('旧数据的长度:%d'%old_data_length)
     # new_data = pd.read_csv('close_price.csv', index_col=0)
-    new_data = pd.read_csv('close_price_02.csv', index_col=0)
+    new_data = pd.read_csv('close_price.csv', index_col=0)
     # print(new_data.index)
     new_data_length = len(new_data.columns)
     print('新数据的长度:%d'%new_data_length)
@@ -126,28 +122,32 @@ def writer_data():
     max_columns = old_data_length + new_data_length
     print('总数据的长度:%d'%max_columns)
 
+    # 居中
+    aligmentCenter = Alignment(horizontal='center', vertical='center')
 
-    # 合并收盘价
-    start_row =1
-    start_col = 14
-    if old_data_length == base_columns:
-            before_adjust_end_col = base_columns + 1
-    else:
-        before_adjust_end_col = old_data_length
+    # 表题格式：黑体+14+加粗
+    font_title = Font(u'黑体',size=10,bold=False,italic=False,strike=False,color='000000')
+
+    # 正文格式：微软雅黑+10
+    font_text = Font(u'微软雅黑',size=10,bold=False,italic=False,strike=False,color='000000')
+
 
     try:
-        if before_adjust_end_col == base_columns + 1:
-            print('不需要解除合并')
+        if old_data_length == base_columns:
+            print('合并新数据')
+            sheet.merge_cells(start_row=1, start_column=base_columns + 1, end_row=1, end_column=max_columns)
+
         else:
-            print('解除合并')
-            sheet.unmerge_cells(start_row=start_row, start_column=start_col, end_row=start_row, end_column=before_adjust_end_col)
-        # sheet.merge_cells(start_row=1, start_column=14, end_row=2, end_column=17)
+            print('附加新数据，先解除旧数据合并')
+            sheet.unmerge_cells(start_row=1, start_column=base_columns + 1, end_row=1, end_column=old_data_length)
+            sheet.merge_cells(start_row=1, start_column=14, end_row=1, end_column=max_columns)
+            # 收盘价合并
+            print('合并成功')
     except ValueError:
-        print('解除合并失败')
-    finally:
-        # 收盘价合并
-        print('合并成功')
-        sheet.merge_cells(start_row=1, start_column=14, end_row=1, end_column=max_columns)
+        print('合并失败')
+    sheet['N1'].alignment = Alignment(horizontal='center', vertical='center')
+
+    print('新数据从%d列开始'%(old_data_length+1))
     for row in sheet.iter_rows(min_row=base_rows, min_col=old_data_length + 1, max_col=max_columns,
                                max_row=max_row):
         code = sheet.cell(row=row[0].row, column=2)
@@ -158,12 +158,16 @@ def writer_data():
         if code_value == '代码':
             for cell in row:
                 cell.value = new_data.columns[i]
+                cell.alignment = aligmentCenter
+                cell.font = font_title
                 i = i + 1
         else:
             print('写入%s的数据'%code_value)
             # print(new_data.loc[code_value,new_data.columns[i]])
             for cell in row:
                 cell.value = new_data.loc[code_value,new_data.columns[i]]
+                cell.alignment = aligmentCenter
+                cell.font = font_text
                 i = i + 1
 
 
@@ -180,7 +184,6 @@ def writer_data():
     # #     print(type(row[13]))
     # #     i = i+1
     workbook.save(path)
-    # just_open(path)
 # read_code()
 writer_data()
 
