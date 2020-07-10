@@ -1,10 +1,11 @@
 import re
-from datetime import time
 
 import openpyxl as openpyxl
 import tushare as ts
 import pandas as pd
 import datetime as dt
+
+from openpyxl.comments import Comment
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment,Font
 from win32com.client import Dispatch
@@ -154,8 +155,8 @@ class JunLinPlan():
                                    max_row=max_row):
             num_row = row[0].row
             code_value = sheet.cell(num_row, column=2).value
-            # code_value = code.value
             share_value = sheet.cell(num_row,column=8).value
+            company_name = sheet.cell(num_row,column=1).value
             i = 0
             if code_value == '代码':
                 for cell in row:
@@ -190,6 +191,14 @@ class JunLinPlan():
                         cell.font = self._font_text
 
                     cell.alignment = self._aligmentCenter
+                    cell.comment = Comment(
+                        "%s:\n"
+                        "低估上：%.2f\n"
+                        "合理下：%.2f\n"
+                        "合理上：%.2f\n"
+                        "高估下：%.2f"%(company_name,down_value,mid1_value,mid2_value,up_value ),
+                        'SYW',width=120,height=100
+                    )
 
                     i = i + 1
 
@@ -219,10 +228,15 @@ class JunLinPlan():
 
 
 path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+today = dt.datetime.now().strftime('%Y%m%d')
 
 JL = JunLinPlan()
 # JL.writer_data()
-JL.run(path,'20200610')
+
+# log_date = today
+# print(today)
+today = '20200610'
+JL.run(path,today)
 
 
 
