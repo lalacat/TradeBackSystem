@@ -25,8 +25,11 @@ pro = ts.pro_api()
 # A->M 13列
 # 3行
 class JunLinPlan():
-    def __init__(self):
-        self.sheet_names = ['5G科技','自主可控','医疗健康','周期消费']
+    def __init__(self,sheet_names=None):
+        if sheet_names is None:
+            self.sheet_names = ['5G科技','自主可控','医疗健康','周期消费']
+        else:
+            self.sheet_names = sheet_names
         self.path =  r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
 
 
@@ -51,22 +54,10 @@ class JunLinPlan():
         self._up_font = Font(u'微软雅黑', size=12, bold=True, italic=False, strike=False, color='B0171F')
 
     def read_code(self,path,sheet_name):
-        sheets = ['5G科技']
-            # ,'自主可控','医疗健康','周期消费']
-        result = None
-        # path = r'X:\股票\君临计划.xlsx'
-        # path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
-        # for sheet in sheets:
         datas = pd.read_excel(path,sheet_name=sheet_name,skiprows=1,index_col=1)
-        # result = datas
-        # print(result.columns)
-        # print(len(result.columns))
         codes = datas.index
         return datas,codes
 
-
-    # last_day = result.columns[-2]
-    # print(last_day)
 
     '''
     不同的schema的股价下载
@@ -87,6 +78,7 @@ class JunLinPlan():
         result = df_01.iloc[1,:]
         result.index.name = code
         result.name = code
+        # print(result)
         return result,new_total_share
 # 写入股价
     '''
@@ -98,7 +90,7 @@ class JunLinPlan():
         # sheet = workbook[sheetname]
 
         # 基础数据信息
-        base_columns = 13
+        base_columns = 14
         base_rows = 2
 
         # 旧数据
@@ -124,7 +116,9 @@ class JunLinPlan():
         print('旧数据的长度:%d'%old_data_length)
 
         new_date = [date for  date in import_date if date not in exist_date]
+        print(new_date)
         new_data = import_data.loc[:,new_date]
+        print(new_data)
         if new_data.empty:
             print('没有新数据')
             return None
@@ -143,7 +137,7 @@ class JunLinPlan():
             else:
                 print('附加新数据，先解除旧数据合并')
                 sheet.unmerge_cells(start_row=1, start_column=base_columns + 1, end_row=1, end_column=old_data_length)
-                sheet.merge_cells(start_row=1, start_column=14, end_row=1, end_column=max_columns)
+                sheet.merge_cells(start_row=1, start_column=base_columns+1, end_row=1, end_column=max_columns)
                 # 收盘价合并
                 print('合并成功')
         except ValueError:
@@ -207,8 +201,7 @@ class JunLinPlan():
         for sheet_name in self.sheet_names:
             print('<<<<<<开始处理:%s>>>>>>'%sheet_name)
             old_data, codes = self.read_code(self.path,sheet_name)
-            # print(old_data.iloc[:,:11])
-            import_data = pd.DataFrame()
+            import_data = None
             new_share = {}
             for code in codes:
                 close_price,share = self.download_price(code, data)
@@ -217,7 +210,9 @@ class JunLinPlan():
                     import_data = close_price
                 else:
                     import_data = pd.concat([import_data, close_price], axis=1, sort=False)
+                # print(import_data)
             import_data = import_data.swapaxes(0, 1)
+            # print(import_data)
             self.writer_data(workbook[sheet_name],old_data,import_data,new_share)
         try:
             workbook.save(path)
@@ -229,13 +224,14 @@ class JunLinPlan():
 
 path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
 today = dt.datetime.now().strftime('%Y%m%d')
-
-JL = JunLinPlan()
+#['5G科技','自主可控','医疗健康','周期消费']
+JL = JunLinPlan(['5G科技','自主可控','医疗健康'])
+# JL = JunLinPlan()
 # JL.writer_data()
 
 # log_date = today
 # print(today)
-today = '20200610'
+today = '20200701'
 JL.run(path,today)
 
 
