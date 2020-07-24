@@ -231,7 +231,7 @@ JL = JunLinPlan(['5G科技','自主可控','医疗健康'])
 
 # log_date = today
 # print(today)
-today = '20200701'
+today = '20200717'
 JL.run(path,today)
 
 
