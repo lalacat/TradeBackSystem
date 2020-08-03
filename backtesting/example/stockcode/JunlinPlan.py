@@ -30,7 +30,7 @@ class JunLinPlan():
             self.sheet_names = ['5G科技','自主可控','医疗健康','周期消费']
         else:
             self.sheet_names = sheet_names
-        self.path =  r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+        # self.path =  r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
 
 
         # 居中
@@ -200,7 +200,7 @@ class JunLinPlan():
         workbook = openpyxl.load_workbook(path)
         for sheet_name in self.sheet_names:
             print('<<<<<<开始处理:%s>>>>>>'%sheet_name)
-            old_data, codes = self.read_code(self.path,sheet_name)
+            old_data, codes = self.read_code(path,sheet_name)
             import_data = None
             new_share = {}
             for code in codes:
@@ -222,16 +222,17 @@ class JunLinPlan():
 
 
 
-path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+# path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
+path = r'X:\股票\君临计划.xlsx'
 today = dt.datetime.now().strftime('%Y%m%d')
 #['5G科技','自主可控','医疗健康','周期消费']
-JL = JunLinPlan(['5G科技','自主可控','医疗健康'])
+JL = JunLinPlan(['5G科技','自主可控','医疗健康','周期消费'])
 # JL = JunLinPlan()
 # JL.writer_data()
 
 # log_date = today
 # print(today)
-today = '20200717'
+today = '20200728'
 JL.run(path,today)
 
 
