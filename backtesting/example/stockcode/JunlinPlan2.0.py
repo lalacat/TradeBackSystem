@@ -53,10 +53,46 @@ class JunLinPlan():
         # 高估下：印度红
         self._up_font = Font(u'微软雅黑', size=12, bold=True, italic=False, strike=False, color='B0171F')
 
-    def read_code(self,path,sheet_name):
-        datas = pd.read_excel(path,sheet_name=sheet_name,skiprows=1,index_col=1)
-        codes = datas.index
-        return datas,codes
+    def read_baseinfo(self,today,sheet):
+        name = (3,1) # A3
+        code = (3,2) # B3
+        maxrow = sheet.max_row
+        print(maxrow)
+        name = sheet.cell(row=name[0],column=name[1])
+        code = sheet.cell(row=code[0],column=code[1])
+        base_date = (2,3) # D2
+        trade_date =(2,9) # I2
+        result = {}
+        today = 20200703
+        base_start_row = 0
+        trade_start_row = 0
+        for i in range(trade_date[0]+1,maxrow+1):
+            basedate = sheet.cell(i,base_date[1]).value
+            tradedate = sheet.cell(i,trade_date[1]).value
+            if basedate is None and result.get('base_start_row',None) is None:
+                base_start_row = i-1
+                result['base_start_row'] = base_start_row
+            if trade_date is not None and trade_start_row == 0:
+                if int(today) < int(tradedate):
+                    trade_start_row = i
+        if trade_start_row == 0:
+            trade_start_row = i + 1
+
+        result['trade_start_row'] = trade_start_row
+        result['undervalue_up'] = sheet.cell(base_start_row,base_date[1]+1).value
+        result['reason_down'] = sheet.cell(base_start_row,base_date[1]+2).value
+        result['reason_up'] = sheet.cell(base_start_row,base_date[1]+3).value
+        result['overvalue_down'] = sheet.cell(base_start_row,base_date[1]+4).value
+        result['total_share'] = sheet.cell(base_start_row,base_date[1]+5).value
+        result['name'] = name.value
+        result['code'] = code.value
+        print(result)
+        print(name.value)
+        print(code.value)
+        # print(maxrow)
+        # datas = pd.read_excel(path,sheet_name=sheet_name,skiprows=1,index_col=1)
+        # codes = datas.index
+        return result
 
 
     '''
@@ -72,13 +108,15 @@ class JunLinPlan():
         df = pro.daily_basic(ts_code=code, start_date=startday)
         df.sort_values(by='trade_date', ascending=True, inplace=True)
         new_total_share = df.loc[0,'total_share'] # 最新的股本数
-        df_01 = df[['trade_date','close']].swapaxes(0,1)
-        # df_01.index = [code,code]
-        df_01.columns = df_01.iloc[0,:]
-        result = df_01.iloc[1,:]
-        result.index.name = code
-        result.name = code
+        result = df[['close']]
+        result.index = df['trade_date']
+        # df_01 = df[['trade_date','close']].swapaxes(0,1)
+        # df_01.columns = df_01.iloc[0,:]
+        # result = df_01.iloc[1,:]
+        # result.index.name = code
+        # result.name = code
         # print(result)
+        result.to_csv('603345_01.csv',header=None)
         return result,new_total_share
 # 写入股价
     '''
@@ -200,7 +238,9 @@ class JunLinPlan():
         workbook = openpyxl.load_workbook(path)
         for sheet_name in self.sheet_names:
             print('<<<<<<开始处理:%s>>>>>>'%sheet_name)
-            old_data, codes = self.read_code(path,sheet_name)
+            base_info = self.read_baseinfo(data,workbook[sheet_name])
+            """
+        
             import_data = None
             new_share = {}
             for code in codes:
@@ -219,21 +259,20 @@ class JunLinPlan():
         except PermissionError:
             print('把 “%s”关掉后，重新运行' % path)
             exit(1)
+        """
 
 
 
 path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
 # path = r'X:\股票\君临计划.xlsx'
-today = dt.datetime.now().strftime('%Y%m%d')
+# today = dt.datetime.now().strftime('%Y%m%d')
 #['5G科技','自主可控','医疗健康','周期消费']
-JL = JunLinPlan(['5G科技','自主可控','医疗健康','周期消费'])
-# JL = JunLinPlan()
-# JL.writer_data()
-
-# log_date = today
-# print(today)
+JL = JunLinPlan(['安井食品'])
 today = '20200803'
-JL.run(path,today)
+result,share = JL.download_price('603345.SH',today)
+# JL.run(path)
+# JL.run(path,today)
+# print(result,share)
 
 
 
