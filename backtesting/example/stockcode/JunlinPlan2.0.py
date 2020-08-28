@@ -32,7 +32,6 @@ class JunLinPlan():
             self.sheet_names = sheet_names
         # self.path =  r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
 
-
         # 居中
         self._aligmentCenter = Alignment(horizontal='center', vertical='center')
 
@@ -53,7 +52,7 @@ class JunLinPlan():
         # 高估下：印度红
         self._up_font = Font(u'微软雅黑', size=12, bold=True, italic=False, strike=False, color='B0171F')
 
-    def read_baseinfo(self,today,sheet):
+    def read_baseinfo(self,sheet,beg_date=None):
         name = (3,1) # A3
         code = (3,2) # B3
         maxrow = sheet.max_row
@@ -63,7 +62,7 @@ class JunLinPlan():
         base_date = (2,3) # D2
         trade_date =(2,9) # I2
         result = {}
-        today = 20200703
+        beg_date = 20200703
         base_start_row = 0
         trade_start_row = 0
         for i in range(trade_date[0]+1,maxrow+1):
@@ -72,12 +71,14 @@ class JunLinPlan():
             if basedate is None and result.get('base_start_row',None) is None:
                 base_start_row = i-1
                 result['base_start_row'] = base_start_row
+                print(base_start_row)
             if trade_date is not None and trade_start_row == 0:
-                if int(today) < int(tradedate):
+                if int(beg_date) < int(tradedate):
                     trade_start_row = i
         if trade_start_row == 0:
             trade_start_row = i + 1
 
+        # 市值估值的读取
         result['trade_start_row'] = trade_start_row
         result['undervalue_up'] = sheet.cell(base_start_row,base_date[1]+1).value
         result['reason_down'] = sheet.cell(base_start_row,base_date[1]+2).value
@@ -89,9 +90,7 @@ class JunLinPlan():
         print(result)
         print(name.value)
         print(code.value)
-        # print(maxrow)
-        # datas = pd.read_excel(path,sheet_name=sheet_name,skiprows=1,index_col=1)
-        # codes = datas.index
+
         return result
 
 
@@ -110,60 +109,51 @@ class JunLinPlan():
         new_total_share = df.loc[0,'total_share'] # 最新的股本数
         result = df[['close']]
         result.index = df['trade_date']
-        # df_01 = df[['trade_date','close']].swapaxes(0,1)
-        # df_01.columns = df_01.iloc[0,:]
-        # result = df_01.iloc[1,:]
-        # result.index.name = code
-        # result.name = code
-        # print(result)
         result.to_csv('603345_01.csv',header=None)
-        return result,new_total_share
+        return (result,new_total_share)
 # 写入股价
     '''
     1.追加新的股价
     2.对比估值变色
     '''
 
-    def writer_data(self,sheet,old_data,import_data,new_share):
-        # sheet = workbook[sheetname]
+    def writer_data(self,sheet,base_info,new_info,new_share):
 
         # 基础数据信息
-        base_columns = 14
+        base_columns = base_info['trade_start_row']
         base_rows = 2
 
         # 旧数据
-        print(old_data.iloc[:,:11])
-        base_total_value = old_data.iloc[:,1:5]
+        print(base_info.iloc[:,:11])
+        base_total_value = base_info.iloc[:,1:5]
         print(base_total_value)
-        base_stock_price = old_data.iloc[:,7:11]
+        base_stock_price = base_info.iloc[:,7:11]
         print(base_stock_price)
-        data_flag = old_data.columns[-1]
+        data_flag = base_info.columns[-1]
 
         # 导入的新数据
-        import_date= import_data.columns
+        new_share = new_info[1]
+        new_data = new_info[0]['close_price']
 
 
         exist_date = []
         if re.match('\d{8}',data_flag):
             print('数据的加入')
-            old_data_length = len(old_data.columns) + 1
-            exist_date = old_data.columns[12:]
+            old_data_length = len(base_info.columns) + 1
+            exist_date = base_info.columns[12:]
         else:
             print('只有基础数据')
             old_data_length = base_columns
         print('旧数据的长度:%d'%old_data_length)
 
-        new_date = [date for  date in import_date if date not in exist_date]
-        print(new_date)
-        new_data = import_data.loc[:,new_date]
-        print(new_data)
+
         if new_data.empty:
             print('没有新数据')
             return None
         new_data_length = len(new_data.columns)
         print('新数据的长度:%d'%new_data_length)
 
-        max_row = len(old_data.index)+base_rows
+        max_row = len(base_info.index)+base_rows
         max_columns = old_data_length + new_data_length
         print('总数据的长度:%d'%max_columns)
 
@@ -234,11 +224,17 @@ class JunLinPlan():
 
                     i = i + 1
 
-    def run(self,path=None,data=None):
+    def run(self,path=None,date=None):
         workbook = openpyxl.load_workbook(path)
         for sheet_name in self.sheet_names:
             print('<<<<<<开始处理:%s>>>>>>'%sheet_name)
-            base_info = self.read_baseinfo(data,workbook[sheet_name])
+            sheet = workbook[sheet_name]
+            base_info = self.read_baseinfo(sheet)
+            new_info = (pd.read_csv('603345_01.csv', names=['close_price'], header=1, index_col=0),3)
+            # base_info = self.download_price(base_info['code'], date)
+
+            self.writer_data(sheet,base_info,new_info)
+
             """
         
             import_data = None
@@ -253,7 +249,6 @@ class JunLinPlan():
                 # print(import_data)
             import_data = import_data.swapaxes(0, 1)
             # print(import_data)
-            self.writer_data(workbook[sheet_name],old_data,import_data,new_share)
         try:
             workbook.save(path)
         except PermissionError:
@@ -269,8 +264,10 @@ path = r'C:\Users\scott\Desktop\invest\君临计划.xlsx'
 #['5G科技','自主可控','医疗健康','周期消费']
 JL = JunLinPlan(['安井食品'])
 today = '20200803'
-result,share = JL.download_price('603345.SH',today)
+# result,share = JL.download_price('603345.SH',today)
 # JL.run(path)
+print(new_info)
+
 # JL.run(path,today)
 # print(result,share)
 
