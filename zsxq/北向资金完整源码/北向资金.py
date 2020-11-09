@@ -72,7 +72,7 @@ def get_index_data(code,start,end):
 indexs={'上证综指': '000001.SH','深证成指': '399001.SZ','沪深300': '000300.SH',
        '创业板指': '399006.SZ','上证50': '000016.SH','中证500': '000905.SH',
        '中小板指': '399005.SZ','上证180': '000010.SH'}
-start='20141117'
+start='20200101'
 end='20200812'
 
 
@@ -106,7 +106,7 @@ index_data.tail()
 #累计收益
 (index_data/index_data.iloc[0]).plot(figsize=(14,6))
 plt.title('A股指数累积收益率\n 2014-2020',size=15)
-plt.show()
+# plt.show()
 
 
 # In[125]:
@@ -127,11 +127,12 @@ all_data=all_ret.join(north_data['north_money'],how='inner')
 all_data.rename(columns={'north_money':'北向资金'},inplace=True)
 all_data.dropna(inplace=True)
 
+print(all_data)
 
 # In[13]:
 
 
-all_data.corr()
+print(all_data.corr())
 
 
 # In[14]:
@@ -234,9 +235,9 @@ def North_Strategy(data,window,stdev_n,cost):
     #根据交易信号和仓位计算策略的每日收益率
     df.loc[df.index[0], 'capital_ret'] = 0
     #今天开盘新买入的position在今天的涨幅(扣除手续费)
-    df.loc[df['position'] > df['position'].shift(1), 'capital_ret'] =                          (df.close/ df.open-1) * (1- cost) 
+    df.loc[df['position'] > df['position'].shift(1), 'capital_ret'] = (df.close/ df.open-1) * (1- cost)
     #卖出同理
-    df.loc[df['position'] < df['position'].shift(1), 'capital_ret'] =                    (df.open / df.close.shift(1)-1) * (1-cost) 
+    df.loc[df['position'] < df['position'].shift(1), 'capital_ret'] = (df.open / df.close.shift(1)-1) * (1-cost)
     # 当仓位不变时,当天的capital是当天的change * position
     df.loc[df['position'] == df['position'].shift(1), 'capital_ret'] =                         df['ret'] * df['position']
     #计算标的、策略、指数的累计收益率
@@ -349,15 +350,6 @@ main(code='000300.SH',start='20161117',cost=0.01)
 
 
 main(code='399006.SZ')
-
-
-# In[128]:
-
-
-df
-
-
-# In[ ]:
 
 
 
