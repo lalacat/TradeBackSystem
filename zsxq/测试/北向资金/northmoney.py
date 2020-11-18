@@ -70,31 +70,34 @@ all_code = {
     # '安井食品': '603345.SH', '天味食品': '603317.SH', '中宠股份': '002891.SZ'
     }
 start='20200101'
-end='20200812'
+# end='20200812'
 # 当前时间
 now = datetime.strftime(datetime.now(),'%Y%m%d')
 new_path = 'X:\\股票\\stock.xlsx'
 index_path = 'X:\\股票\\indexs.xlsx'
 
 
-# index_data=pd.DataFrame()
-# for name,code in indexs.items():
-#     index_data[name]=get_index_data(code,start,now)['close']
-# print(index_data)
+
+def download_index(cg,start,end):
+    index_data=pd.DataFrame()
+    for name,code in indexs.items():
+        index_data[name]=get_index_data(code,start,end)['close']
+    cg.save_excel(index_data,index_path,'index')
+
 
 cg = Coff_General()
-# cg.save_excel(index_data,index_path,'index')
 
 # 自选股
-# datas = cg.read_excel(all_code,new_path,(start,now))
-# new_name= {}
-# for n,v in all_code.items():
-#     new_name[v]=n
-# datas.columns = [new_name.get(n) for n in datas.columns]
+def read_selfcode(cg,now,end):
+    datas = cg.read_excel(all_code,new_path,(start,end))
+    new_name= {}
+    for n,v in all_code.items():
+        new_name[v]=n
+    datas.columns = [new_name.get(n) for n in datas.columns]
+    return datas
 
 
 datas = cg.read_excel(indexs,index_path,(start,now),'index')
-print(datas)
 #累计收益
 # (datas/datas.iloc[0]).plot(figsize=(14,6))
 # plt.title('A股指数累积收益率\n 2014-2020',size=15)
@@ -129,7 +132,6 @@ import seaborn as sns
 
 #沪深300指数收益率与北向资金
 final_data=all_data[['沪深300','北向资金']].dropna()
-print(final_data)
 # final_data.plot(secondary_y='北向资金',figsize=(12,6))
 # plt.title('沪深300日收益率 VS 北向资金',size=15)
 # plt.show()
@@ -138,18 +140,22 @@ print(final_data)
 
 def cal_rol_cor(data,period=30):
     cors=data.rolling(period).corr()
-    print(cors)
     # list[param1:param2:param3]
     # param1，相当于start_index，可以为空，默认是0
     # param2，相当于end_index，可以为空，默认是list.size
     # param3，步长，默认为1。步长为 - 1时，返回倒序原序列
     cors=cors.dropna().iloc[1::2,0]
-    print(cors)
+    cors=cors.dropna()
     cors=cors.reset_index()
-    print(cors)
     cors=cors.set_index('trade_date')
-    print(cors)
-
+    print(cors['level_1'])
     return cors['沪深300']
-cor=cal_rol_cor(final_data,period=30)
-cor.describe()
+
+
+# cor=cal_rol_cor(final_data,period=30)
+# print(cor.describe())
+# cor.plot(figsize=(14,6),label='移动120日相关系数')
+# plt.title('沪深300与北向资金移动120日相关系数',size=15)
+# plt.axhline(cor.mean(), c='r',label='相关系数均值=0.33')
+# plt.legend(loc=2)
+# plt.show()
