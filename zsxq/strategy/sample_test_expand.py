@@ -2,6 +2,8 @@
 # coding: utf-8
 
 import backtrader as bt
+from backtrader.feeds import PandasData
+
 import pandas as pd
 from datetime import datetime
 
@@ -72,6 +74,10 @@ class my_strategy1(bt.Strategy):
             if self.dataclose[0] < self.sma[0]:
                 #执行卖出
                 self.order = self.sell(size=500)
+class Addmoredata(PandasData):
+    lines = ('turnover_rate','pe','pb',)
+    params = (('turnover_rate',7),('pe',8),('pb',9),)
+
 def main():
     # 初始化cerebro回测系统设置
     cerebro = bt.Cerebro()
