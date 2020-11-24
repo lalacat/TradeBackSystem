@@ -1,0 +1,3 @@
+注意，Analyzers模块原生代码中不包含TotalValue一项，即要获取每一时刻下的账户价值需要自行编写扩展代码。将totalvalue.py和__init__.py复制到原生包安装文件夹下（见图）即可。
+
+画图的时候，要先安装plotly和dash，根据提示安装即可。

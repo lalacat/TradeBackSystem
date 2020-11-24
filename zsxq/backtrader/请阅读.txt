@@ -1,0 +1,1 @@
+先将zjy_plot.py文件放置在backtrader安装路径下。并在__init__.py中加入from .zjy_plot import *
