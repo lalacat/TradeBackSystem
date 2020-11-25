@@ -49,16 +49,19 @@ def get_code_data(code, start,end):
     data = data[['datetime', 'open', 'high', 'low', 'close', \
                  'vol', 'north_money']]
     data = data.fillna(0)
+    data['signal']=0
     return data
 
-s = get_code_data('002475.SZ','20200101','20201124')
-# print(s)
+s = get_code_data('002475.SZ','20201101','20201124')
+s2 = get_code_data('002192.SZ','20201101','20201124')
+print(s)
+print(s2)
 
 
 class my_strategy1(bt.Strategy):
     # 默认参数
-    params = (('long_period', 20),
-              ('short_period', 10),
+    params = (('long_period', 10),
+              ('short_period', 5),
               ('printlog', False),)
     def __init__(self):
         self.order = None
@@ -66,28 +69,31 @@ class my_strategy1(bt.Strategy):
         self.buycomm = 0
         self.buy_size = 0
         self.buy_count = 0
+        self.closeprice1 = self.data[0]
+        self.closeprice2 = self.data1[-1]
+
         # 海龟交易法则中的唐奇安通道和平均波幅ATR
-        self.H_line = bt.indicators.Highest(self.data.high(-1), period=self.p.long_period)
-        self.L_line = bt.indicators.Lowest(self.data.low(-1), period=self.p.short_period)
-        self.TR = bt.indicators.Max((self.data.high(0) - self.data.low(0)), \
-                                    abs(self.data.close(-1) - self.data.high(0)), \
-                                    abs(self.data.close(-1) - self.data.low(0)))
-        self.ATR = bt.indicators.SimpleMovingAverage(self.TR, period=14)
-        # 价格与上下轨线的交叉
-        self.buy_signal = bt.ind.CrossOver(self.data.close(0), self.H_line)
-        self.sell_signal = bt.ind.CrossOver(self.data.close(0), self.L_line)
-
-        print(self.data.high(-1))
-        print(self.H_line)
-
+        # self.H_line = bt.indicators.Highest(self.data.high(-1), period=self.p.long_period)
+        # self.L_line = bt.indicators.Lowest(self.data.low(-1), period=self.p.short_period)
+        # self.TR = bt.indicators.Max((self.data.high(0) - self.data.low(0)), \
+        #                             abs(self.data.close(-1) - self.data.high(0)), \
+        #                             abs(self.data.close(-1) - self.data.low(0)))
+        # self.ATR = bt.indicators.SimpleMovingAverage(self.TR, period=14)
+        # # 价格与上下轨线的交叉
+        # self.buy_signal = bt.ind.CrossOver(self.data.close(0), self.H_line)
+        # self.sell_signal = bt.ind.CrossOver(self.data.close(0), self.L_line)
+        #
+        # print(self.closeprice1)
+        # print(self.closeprice2)
+        bt.indicators.ATR(self.data.close(0), plot=True)
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.date(0)
         print('%s, %s' % (dt.isoformat(), txt))
 
     def next(self):
-        self.log(f"北向资金:{self.datas[0].north_money[0]},\
-          市净率:{self.datas[0].pb[0]},市盈率:{self.datas[0].pe[0]}")
+        print(len(self))
+        self.log(f"北向资金:{self.datas[0].north_money[0]}")
 
 
 
@@ -102,15 +108,20 @@ def main():
     # 初始化cerebro回测系统设置
     cerebro = bt.Cerebro()
     #回测期间
-    start=datetime(2020, 1, 1)
-    end=datetime(2020,11, 1)
+    start=datetime(2020, 11, 1)
+    end=datetime(2020,11, 24)
     # 加载数据
     data = NorthMoney(dataname=s,fromdate=start,todate=end)
+    data2 = NorthMoney(dataname=s2,fromdate=start,todate=end)
     #将数据传入回测系统
     cerebro.adddata(data)
+    cerebro.adddata(data2)
     # 将交易策略加载到回测系统中
     cerebro.addstrategy(my_strategy1)
     cerebro.run()
+    cerebro.plot()
+
+
 if __name__ == '__main__':
     main()
 
