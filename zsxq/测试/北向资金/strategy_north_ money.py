@@ -45,6 +45,7 @@ class North_Strategy(object):
         df = data.copy().dropna()
         df['mid'] = df['北向资金'].rolling(window).mean()
         stdev = df['北向资金'].rolling(window).std()
+        df['stdev'] = stdev
         # 上下轨
         df['upper'] = df['mid'] + stdev_n * stdev
         df['lower'] = df['mid'] - stdev_n * stdev
@@ -56,7 +57,6 @@ class North_Strategy(object):
         df.loc[df['北向资金'] > df.upper, 'signal'] = 1
         # 当日北向资金跌破下轨线发出卖出信号设置为0，下个交易日平仓
         df.loc[df['北向资金'] < df.lower, 'signal'] = 0
-        print(df['signal'])
         df['position'] = df['signal'].shift(1)
         df['position'].fillna(method='ffill', inplace=True)
         df['position'].fillna(0, inplace=True)
@@ -68,7 +68,6 @@ class North_Strategy(object):
         df.loc[df['position'] < df['position'].shift(1), 'capital_ret'] = (df.open / df.close.shift(1) - 1) * (1 - cost)
         # 当仓位不变时,当天的capital是当天的change * position
         df.loc[df['position'] == df['position'].shift(1), 'capital_ret'] = df['ret'] * df['position']
-        print(df)
         # 计算标的、策略、指数的累计收益率
         df['策略净值'] = (df.capital_ret + 1.0).cumprod()
         df['指数净值'] = (df.ret + 1.0).cumprod()
@@ -187,7 +186,8 @@ class North_Strategy(object):
         # 获取指数数据
 
     def get_code_data(self, code, start, end):
-        index_df = self.pro.index_daily(ts_code=code, start_date=start, end_date=end)
+        # index_df = self.pro.index_daily(ts_code=code, start_date=start, end_date=end)
+        index_df = self.pro.daily(ts_code=code, start_date=start, end_date=end)
         index_df.index = pd.to_datetime(index_df.trade_date)
         index_df = index_df.sort_index()
         return index_df
@@ -240,14 +240,15 @@ start='20190101'
 # 当前时间
 now = datetime.strftime(datetime.now(),'%Y%m%d')
 code_1 = '000300.SH'
-code_2 = '000905.SH'
+code_2 = '002475.SZ'
 index_path = 'X:\\股票\\indexs.xlsx'
-result_path = 'X:\\股票\\result.xlsx'
+# result_path = 'X:\\股票\\result.xlsx'
+result_path = 'C:\\Users\\scott\\Desktop\\invest\\result.xlsx'
 
 # main('000300.SH',start,now,22,1.5,0.01)
 nm = North_Strategy()
-# data = nm.download_data(code_2,start,now)
+data = nm.download_data('002475.SZ','20201101','20201124')
 # nm._save_data(code_2,data,index_path)
-data = nm.get_from_excel(code_2,index_path)
-result = nm.init_parm(data,20,1.65,0.01)
-# nm._save_data(code_2,result,result_path)
+# data = nm.get_from_excel(code_2,index_path)
+result = nm.init_parm(data,5,1.65,0.01)
+nm._save_data(code_2,result,result_path)
