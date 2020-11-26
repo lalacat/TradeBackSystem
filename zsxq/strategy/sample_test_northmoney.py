@@ -72,17 +72,24 @@ class my_strategy1(bt.Strategy):
         self.closeprice = self.data.north_money
         self.mid = bt.indicators.SimpleMovingAverage(
                       self.closeprice(0), period=self.params.maperiod)
-        self.dev = bt.indicators.StandardDeviation(self.mid(0),period=5)
+        self.dev = bt.indicators.StandardDeviation(self.closeprice(0),period=5)
+        self.upper = self.mid + 1.65 * self.dev
+        self.lower = self.mid - 1.65 * self.dev
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.date(0)
         print('%s, %s' % (dt.isoformat(), txt))
 
     def next(self):
-        self.log(f"均值:{self.mid[0]}"
-                 f" 方差:{self.dev[0]}")
-
-
+        if self.order:  # 检查是否有指令等待执行,
+            return
+        if not self.position:  # 没有持仓
+            if self.closeprice[-1] > self.upper[-1]:
+                self.order = self.buy(price=self.data.open[0],size=100)
+                self.log('开仓在%f'%self.data.open[0])
+            if self.closeprice[-1] < self.lower[-1]:
+                self.order = self.sell(price=self.data.open[0],size=100)
+                self.log('平仓在%f'%self.data.open[0])
 
 class NorthMoney(PandasData):
     lines = ('north_money',)
@@ -105,9 +112,17 @@ def main():
     # cerebro.adddata(data2)
     # 将交易策略加载到回测系统中
     cerebro.addstrategy(my_strategy1)
+    startcash = 10000
+    cerebro.broker.setcash(startcash)
+    # 设置交易手续费为 0.2%
+    cerebro.broker.setcommission(commission=0.002)
     cerebro.run()
+    portvalue = cerebro.broker.getvalue()
+    pnl = portvalue - startcash
 
-
+    # 打印结果
+    print(f'总资金: {round(portvalue, 2)}')
+    print(f'净收益: {round(pnl, 2)}')
 if __name__ == '__main__':
     main()
 

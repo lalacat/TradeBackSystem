@@ -44,8 +44,12 @@ class North_Strategy(object):
         # 中轨
         df = data.copy().dropna()
         df['mid'] = df['北向资金'].rolling(window).mean()
-        stdev = df['北向资金'].rolling(window).std()
-        df['stdev'] = stdev
+        # 样本标准差，即分母为n-1
+        # stdev = df['北向资金'].rolling(window).std()
+        # ddofint, default 1
+        # Delta Degrees of Freedom. The divisor used in calculations is N - ddof, where N represents the number of elements.
+        stdev = df['北向资金'].rolling(window).std(ddof=0)
+        df['std']=stdev
         # 上下轨
         df['upper'] = df['mid'] + stdev_n * stdev
         df['lower'] = df['mid'] - stdev_n * stdev
@@ -242,13 +246,14 @@ now = datetime.strftime(datetime.now(),'%Y%m%d')
 code_1 = '000300.SH'
 code_2 = '002475.SZ'
 index_path = 'X:\\股票\\indexs.xlsx'
-# result_path = 'X:\\股票\\result.xlsx'
-result_path = 'C:\\Users\\scott\\Desktop\\invest\\result.xlsx'
+result_path = 'X:\\股票\\result1.xlsx'
+# result_path = 'C:\\Users\\scott\\Desktop\\invest\\result.xlsx'
 
 # main('000300.SH',start,now,22,1.5,0.01)
 nm = North_Strategy()
 data = nm.download_data('002475.SZ','20201101','20201124')
 # nm._save_data(code_2,data,index_path)
 # data = nm.get_from_excel(code_2,index_path)
-result = nm.init_parm(data,5,1.65,0.01)
-nm._save_data(code_2,result,result_path)
+result = nm.init_parm(data,5,1.65,0.002)
+# nm._save_data(code_2,result,result_path)
+print(result)
