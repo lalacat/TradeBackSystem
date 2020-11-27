@@ -88,7 +88,7 @@ class North_Strategy(object):
 
 
     # 策略评价指标
-    def performance(self,df):
+    def performance(self,df,code):
         df1 = df.loc[:, ['ret', 'capital_ret']]
         # 计算每一年(月,周)股票,资金曲线的收益
         year_ret = df1.resample('A').apply(lambda x: (x + 1.0).prod() - 1.0)
@@ -123,9 +123,9 @@ class North_Strategy(object):
         print(f'策略月胜率为：{round(month_win_rate * 100, 2)}%')
         print(f'策略周胜率为：{round(week_win_rate * 100, 2)}%')
 
-        print(f'总收益率：  策略：{TA1}%，沪深300：{TA2}%')
-        print(f'年化收益率：策略：{AR1}%, 沪深300：{AR2}%')
-        print(f'最大回撤：  策略：{MD1}%, 沪深300：{MD2}%')
+        print(f'总收益率：  策略：{TA1}%，{code}：{TA2}%')
+        print(f'年化收益率：策略：{AR1}%, {code}：{AR2}%')
+        print(f'最大回撤：  策略：{MD1}%, {code}：{MD2}%')
         print(f'策略Alpha： {round(alpha, 2)}, Beta：{round(beta, 2)}，夏普比率：{S}')
 
     # 对策略累计收益率进行可视化
@@ -246,8 +246,8 @@ now = datetime.strftime(datetime.now(),'%Y%m%d')
 code_1 = '000300.SH'
 code_2 = '002475.SZ'
 index_path = 'X:\\股票\\indexs.xlsx'
-result_path = 'X:\\股票\\result1.xlsx'
-# result_path = 'C:\\Users\\scott\\Desktop\\invest\\result.xlsx'
+# result_path = 'X:\\股票\\result1.xlsx'
+result_path = 'C:\\Users\\scott\\Desktop\\invest\\result.xlsx'
 
 # main('000300.SH',start,now,22,1.5,0.01)
 nm = North_Strategy()
@@ -256,4 +256,5 @@ data = nm.download_data('002475.SZ','20201101','20201124')
 # data = nm.get_from_excel(code_2,index_path)
 result = nm.init_parm(data,5,1.65,0.002)
 # nm._save_data(code_2,result,result_path)
-print(result)
+# print(result)
+nm.performance(result,code_2)
