@@ -24,6 +24,8 @@ def _get_cal_date(start, end=None):
     cal_date = cal_date[cal_date.is_open == 1]
     dates = cal_date.cal_date.values
     return dates
+
+
 def get_north_money(start, end):
     # 获取交易日历
     dates = _get_cal_date(start, end)
@@ -39,6 +41,8 @@ def get_north_money(start, end):
             # 删除重复项
             df = df.drop_duplicates()
     return df
+
+
 def get_code_data(code, start,end):
     df = pro.daily(ts_code=code, start_date=start,end_date=end)
     data2 = get_north_money(start,end)
@@ -52,7 +56,6 @@ def get_code_data(code, start,end):
     data['signal']=0
     return data
 
-s = get_code_data('002475.SZ','20201101','20201124')
 # s2 = get_code_data('002192.SZ','20201101','20201124')
 # # print(s)
 # # print(s2)
@@ -81,15 +84,18 @@ class my_strategy1(bt.Strategy):
         print('%s, %s' % (dt.isoformat(), txt))
 
     def next(self):
-        if self.order:  # 检查是否有指令等待执行,
-            return
-        if not self.position:  # 没有持仓
-            if self.closeprice[-1] > self.upper[-1]:
-                self.order = self.buy(price=self.data.open[0],size=100)
-                self.log('开仓在%f'%self.data.open[0])
-            if self.closeprice[-1] < self.lower[-1]:
-                self.order = self.sell(price=self.data.open[0],size=100)
-                self.log('平仓在%f'%self.data.open[0])
+        # if self.order:  # 检查是否有指令等待执行,
+        #     print(self.order)
+        #     return
+        # if not self.position:  # 没有持仓
+        if self.closeprice[-1] > self.upper[-1]:
+            self.order = self.buy(price=self.data.open[0],size=100)
+            self.log('开仓在%f'%self.data.open[0])
+
+        if self.closeprice[-1] < self.lower[-1]:
+            self.order = self.sell(price=self.data.open[0],size=100)
+            self.log('平仓在%f'%self.data.open[0])
+        # print(self.position)
 
 class NorthMoney(PandasData):
     lines = ('north_money',)
@@ -102,10 +108,13 @@ def main():
     # 初始化cerebro回测系统设置
     cerebro = bt.Cerebro()
     #回测期间
-    start=datetime(2020, 11, 1)
-    end=datetime(2020,11, 24)
+    # start=datetime(2020, 1, 1)
+    start= '20200101'
+    # end=datetime(2020,11, 24)
+    end='20201124'
     # 加载数据
-    data = NorthMoney(dataname=s,fromdate=start,todate=end)
+    s = get_code_data('002475.SZ', start, end)
+    data = NorthMoney(dataname=s,fromdate=pd.to_datetime(start),todate=pd.to_datetime(end))
     # data2 = NorthMoney(dataname=s2,fromdate=start,todate=end)
     #将数据传入回测系统
     cerebro.adddata(data)
@@ -123,6 +132,8 @@ def main():
     # 打印结果
     print(f'总资金: {round(portvalue, 2)}')
     print(f'净收益: {round(pnl, 2)}')
+
+
 if __name__ == '__main__':
     main()
 
