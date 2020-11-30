@@ -4,11 +4,15 @@ Created on Tue Nov 12 22:01:39 2019
 
 @author: zjy
 """
-from RPS import get_code
+# from RPS import get_code
 import pandas as pd  
 import numpy as np
-from pyecharts import Kline,Line, Bar,Overlap
-from base import sql_engine
+# from pyecharts import Kline,Line, Bar,Overlap
+from django.contrib.postgres.lookups import Overlap
+from pyecharts.charts import Line, Bar, Kline
+
+from zsxq.Python价量形态选股代码.RPS import get_code
+from zsxq.base import sql_engine
 
 engine = sql_engine()
 codes,names=get_code()
