@@ -15,7 +15,8 @@ endtime = ''  # endtime默认是最近的一个交易日，若未自定请保持
 
 
 def sqlo(dbname):
-    path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
+    # path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
+    path = 'W:\\stock_db'+ '\\'
     return sqlite3.connect(path + dbname)
 
 
