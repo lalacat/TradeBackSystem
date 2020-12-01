@@ -15,8 +15,8 @@ endtime = ''  # endtime默认是最近的一个交易日，若未自定请保持
 
 
 def sqlo(dbname):
-    # path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
-    path = 'W:\\stock_db'+ '\\'
+    path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
+    # path = 'W:\\stock_db'+ '\\'
     return sqlite3.connect(path + dbname)
 
 
@@ -52,7 +52,7 @@ class Data(object):
         self.conn = sqlo(db_name)
         self.cur = self.conn.cursor()
 
-        self.table_name = None
+        self.all_tables = None
         self.null = None
         self.stocklist = get_code()
         self.codes = self.stocklist[0]  # 带'.sz'后缀的代码
@@ -62,15 +62,18 @@ class Data(object):
     # 检查数据库
     def checkdb(self):
         try:
-            table_name = pd.read_sql(
+            table_names = pd.read_sql(
                 "select name from sqlite_master where type='table' order by name", self.conn).values
-            if 'sqlite_sequence' in table_name:
-                table_name = table_name[:-1]
-            self.table_name = table_name
+            # sqlite_sequence表也是SQLite的系统表。该表用来保存其他表的RowID的最大值。
+            # 数据库被创建时，sqlite_sequence表会被自动创建。该表包括两列。
+            # 第一列为name，用来存储表的名称。第二列为seq，用来保存表对应的RowID的最大值
+            if 'sqlite_sequence' in table_names:
+                table_names = table_names[:-1]
+            self.all_tables = table_names
         except Exception as e:
             print(e)
             print('还没有检查到数据库存在，即将开始获取股票数据...')
-            self.table_name = []
+            self.all_tables = []
 
     # 每日行情数据
     def get_daily_data(self):
@@ -79,21 +82,29 @@ class Data(object):
         else:
             stockcodes = self.codes
         nn = 0
+
+        df0 = pro.daily(ts_code='688106.SH', start_date='20201120', end_date=self.end)
+        print(df0)
+        df0.to_sql('test',self.conn,index=False,if_exists='append')
+
         for stockcode in stockcodes:
-            try:
-                df0 = pro.daily(ts_code=stockcode, start_date=self.start, end_date=self.end)
-                df1 = pro.adj_factor(ts_code=stockcode, start_date=self.start, end_date=self.end)  # 复权因子
-                df = pd.merge(df0, df1)  # 合并数据
-                if df.empty:
-                    print('数据获取失败或该股票在endtime后上市，现跳过其数据获取。')
-                    nn += 1
-                    continue
-                df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
-                nn += 1
-                print(f"完成第{nn}支股票 {stockcode} 的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
-            except Exception as e:
-                print(stockcode)
-                print(e)
+
+            print(stockcode)
+
+            # try:
+            #     df0 = pro.daily(ts_code=stockcode, start_date=self.start, end_date=self.end)
+            #     df1 = pro.adj_factor(ts_code=stockcode, start_date=self.start, end_date=self.end)  # 复权因子
+            #     df = pd.merge(df0, df1)  # 合并数据
+            #     if df.empty:
+            #         print('数据获取失败或该股票在endtime后上市，现跳过其数据获取。')
+            #         nn += 1
+            #         continue
+            #     df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
+            #     nn += 1
+            #     print(f"完成第{nn}支股票 {stockcode} 的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
+            # except Exception as e:
+            #     print(stockcode)
+            #     print(e)
 
     # 获取最新交易日期
     def get_trade_date(self, start_time, end_time, now_time=datetime.now()):
@@ -144,12 +155,12 @@ class Data(object):
 
     # 查询数据库信息
     def info_sql(self):
-        if self.table_name is None:
+        if self.all_tables is None:
             self.checkdb()
-        print(f'数据库包含股票个数：{len(self.table_name)}')
-        # sql2=f'select min(trade_date) from {self.table_name[1]}'
-        sql1=f'select min(trade_date) from "{self.table_name[0][0]}"'
-        sql2=f'select max(trade_date) from "{self.table_name[0][0]}"'
+        print(f'数据库包含股票个数：{len(self.all_tables)}')
+        # sql2=f'select min(trade_date) from {self.all_tables[1]}'
+        sql1=f'select min(trade_date) from "{self.all_tables[0][0]}"'
+        sql2=f'select max(trade_date) from "{self.all_tables[0][0]}"'
         t0=pd.read_sql(sql1,self.conn).values[0][0]
         t1=pd.read_sql(sql2,self.conn).values[0][0]
         print(f'数据期间：{t0}——{t1}')
@@ -160,14 +171,14 @@ class Data(object):
         self.checkdb()
         # ## 2 判断是否有股票退市/上市
         # 2.1 还没有获取股票数据
-        if len(self.table_name) == 0:
+        if len(self.all_tables) == 0:
             print('开始获取股票数据，请稍候...')
             self.get_daily_data()
         # 2.2 有股票退市/上市
-        elif len(self.table_name) != 0 and len(self.stockcodes) != len(self.table_name):
+        elif len(self.all_tables) != 0 and len(self.stockcodes) != len(self.all_tables):
             print('股票列表有变动(或数据还未获取完整)，开始检查...')
             c = 0
-            for tn in self.table_name:
+            for tn in self.all_tables:
                 if tn not in self.stockcodes:
                     self.cur.execute(f"drop table '{tn[0]}'")
                     print(f'股票{tn[0]}退市，现已将其数据从数据库中删除。')
@@ -177,11 +188,11 @@ class Data(object):
                                          self.conn).values
                 if 'sqlite_sequence' in table_name:
                     table_name = table_name[:-1]
-                self.table_name = table_name
+                self.all_tables = table_name
             else:
                 null = []
                 for sc in self.codes:
-                    if sc[:-3] not in self.table_name:
+                    if sc[:-3] not in self.all_tables:
                         null.append(sc)
                 if len(null) > 0:
                     print('股票数据有遗漏，开始查漏补缺...')
@@ -193,12 +204,12 @@ class Data(object):
         else:
             c = 0
             for sc in range(len(self.stockcodes)):
-                if self.stockcodes[sc] != self.table_name[sc][0]:
+                if self.stockcodes[sc] != self.all_tables[sc][0]:
                     c = 1
             # 2.3.1 退市的股票数刚好等于新上市的股票数
             if c == 1:
                 # 2.3.1.1 删除退市的
-                for tn in self.table_name:
+                for tn in self.all_tables:
                     if tn not in self.stockcodes:
                         self.cur.execute(f"drop table '{tn[0]}'")
                         print(f'股票{tn[0]}退市，现已将其数据从数据库中删除。')
@@ -207,11 +218,11 @@ class Data(object):
                                          self.conn).values
                 if 'sqlite_sequence' in table_name:
                     table_name = table_name[:-1]
-                self.table_name = table_name
+                self.all_tables = table_name
                 # 2.3.1.2 获取新上市股票的数据
                 null = []
                 for sc in self.stockcodes:
-                    if sc not in self.table_name:
+                    if sc not in self.all_tables:
                         null.append(sc)
                 print('股票数据有遗漏，开始查漏补缺...')
                 self.null = null
@@ -220,7 +231,7 @@ class Data(object):
                                          self.conn).values
                 if 'sqlite_sequence' in table_name:
                     table_name = table_name[:-1]
-                self.table_name = table_name
+                self.all_tables = table_name
                 # 2.3.1.2 最后再检查一下更新
                 self.update_sql()
             # 2.3.2 没有退市/上市，检查有没有更新
@@ -231,7 +242,20 @@ class Data(object):
 if __name__ == "__main__":
     pro = ts_pro(token)
     data = Data(starttime, endtime)
-    data.executes()
+    data.checkdb()
+    # data.get_daily_data()
+    # print(data.table_name)
+    # print(data.codes)
+    # print(data.stockcodes)
+    test_data = data.stockcodes[:10]
+    print(test_data.tolist())
+    from queue import Queue
+    q = Queue(maxsize=len(test_data))
+    for a in  test_data:
+        q.put(a)
+    print(q.get())
+
+    # data.executes()
     # data.info_sql()
 
     # # macos自动关机指令
