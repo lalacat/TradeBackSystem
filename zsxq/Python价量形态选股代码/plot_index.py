@@ -8,8 +8,8 @@ Created on Tue Nov 12 21:06:28 2019
 #先引入后面可能用到的包（package）
 import pandas as pd  
 import numpy as np
-from pyecharts import Kline,Line, Bar,Overlap
-from .base import ts_pro
+from pyecharts.basic_charts  import Kline,Line, Bar,Overlap
+from zsxq.database.base import ts_pro
 #正常显示画图时出现的中文和负号
 from pylab import mpl
 mpl.rcParams['font.sans-serif']=['SimHei']

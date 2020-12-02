@@ -10,7 +10,7 @@ import pandas as pd
 from dateutil.parser import parse
 from datetime import datetime,timedelta
 
-from zsxq.base import ts_pro, sql_engine
+from zsxq.base_bak import ts_pro, sql_engine
 
 pro=ts_pro()
 engine = sql_engine()

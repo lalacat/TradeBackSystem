@@ -6,8 +6,9 @@ from dateutil.parser import parse
 from datetime import datetime, timedelta
 import sys
 import sqlite3
-import tushare as ts
 from pandas.io.sql import DatabaseError
+
+from zsxq.database.base import sql_engine, ts_pro,ts
 
 token = 'e0eeb08befd1f07516df2cbf9cbd58663f77fd72f92a04f290291c9d'
 db_name = 'stock_data.db'
@@ -15,15 +16,17 @@ starttime = '20201130'
 endtime = ''  # endtime默认是最近的一个交易日，若未自定请保持''，引号内无空格
 
 
-def sqlo(dbname):
-    # path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
-    path = 'W:\\stock_db'+ '\\'
-    return sqlite3.connect(path + dbname)
+# def sqlo(dbname):
+#     path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
+#     # path = 'W:\\stock_db'+ '\\'
+#     return sqlite3.connect(path + dbname)
+#
+#
+# def ts_pro(Token):
+#     return ts.pro_api(Token)
 
-
-def ts_pro(Token):
-    return ts.pro_api(Token)
-
+engine = sql_engine()
+ts = ts()
 
 # 获取股票代码列表
 def get_code():
@@ -49,9 +52,10 @@ class Data(object):
         self.start = None
         self.end = None
         self.get_trade_date(start, end)
-        self.fiter_code = ['300911.SZ', '300915.SZ', '300916.SZ', '605258.SH', '688557.SH', '688578.SH']
+        # self.fiter_code = ['300911.SZ', '300915.SZ', '300916.SZ', '605258.SH', '688557.SH', '688578.SH']
+        self.fiter_code = []
 
-        self.conn = sqlo(db_name)
+        self.conn = engine
         self.cur = self.conn.cursor()
 
         self.all_tables = None
@@ -86,17 +90,16 @@ class Data(object):
         nn = 0
         for stockcode in stockcodes:
             try:
-                df0 = pro.daily(ts_code=stockcode, start_date=self.start, end_date=self.end)
-                df1 = pro.adj_factor(ts_code=stockcode, start_date=self.start, end_date=self.end)  # 复权因子
-                df = pd.merge(df0, df1)  # 合并数据
+                df = self._get_newdata(ts_code=stockcode, start_date=self.start, end_date=self.end)
                 if df.empty:
                     print(f'数据获取失败或该股票在{self.end}后上市，现跳过其数据获取。')
                     nn += 1
                     self.fiter_code.append(stockcode)
                     continue
-                df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
-                nn += 1
-                print(f"完成第{nn}支股票 {stockcode} 的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
+                self._check_col(stockcode,df)
+                # df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
+                # nn += 1
+                # print(f"完成第{nn}支股票 {stockcode} 的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
             except Exception as e:
                 print(stockcode)
                 print(e)
@@ -138,7 +141,6 @@ class Data(object):
                 continue
             try:
                 d0 = pd.read_sql(f"select max(trade_date) from '{sc[:-3]}' ", self.conn).values[0][0]
-                # print(f'第{ns}/{len(all_codes)}支股票{sc}最新交易日是{d0}，进度：{round(ns / len(all_codes) * 100, 2)}%')
             except DatabaseError:
                 print(f"[ERROR]第{ns}/{len(all_codes)}支股票{sc}:no such table: {sc}")
                 codes.append(sc)
@@ -149,12 +151,10 @@ class Data(object):
                 n0 = np.argwhere(self.cals == d0)[0][0] + 1
                 n1 = np.argwhere(self.cals == self.end)[0][0] + 1
                 dates = self.cals[n0:n1]
-                df0 = pro.daily(ts_code=sc, start_date=dates[0], end_date=dates[-1])
-                if df0.empty:
+                df = self._get_newdata(ts_code=sc, start_date=dates[0], end_date=dates[-1])
+                if df.empty:
                     print(f'股票{sc}已停牌，跳过其数据获取')
                     continue
-                df1 = pro.adj_factor(ts_code=sc, start_date=dates[0], end_date=dates[-1])  # 复权因子
-                df = pd.merge(df0, df1)  # 合并数据
                 df.to_sql(sc[:-3], self.conn, index=False, if_exists='append')
                 print(f'第{ns}/{len(all_codes)}支股票{sc}数据有更新，正在更新，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
             else:
@@ -170,7 +170,6 @@ class Data(object):
         if self.all_tables is None:
             self.checkdb()
         print(f'数据库包含股票个数：{len(self.all_tables)}')
-        # sql2=f'select min(trade_date) from {self.all_tables[1]}'
         sql1=f'select min(trade_date) from "{self.all_tables[0][0]}"'
         sql2=f'select max(trade_date) from "{self.all_tables[0][0]}"'
         t0=pd.read_sql(sql1,self.conn).values[0][0]
@@ -253,55 +252,37 @@ class Data(object):
             # 2.3.2 没有退市/上市，检查有没有更新
             else:
                 self.update_sql()
+
+    def _get_newdata(self,ts_code, start_date, end_date):
+        # df0 = pro.daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+        try :
+            df0 = ts.pro_bar(ts_code=ts_code, start_date=start_date, end_date=end_date ,adj='qfq', adjfactor=True)# 复权因子
+        except IOError:
+            df0 = pd.DataFrame()
+        if df0.empty:
+            return df0
+        else:
+            df1 = pro.daily_basic(ts_code=ts_code, start_date=start_date)
+        df = pd.merge(df0, df1)
+        return df
+
+    def _check_col(self,ts_code,new_df):
+        sql1 = f"PRAGMA  table_info('{ts_code}')"
+        db_col =  pd.read_sql(sql1,self.conn)['name'].values.tolist()
+        new_col = new_df.columns.values.tolist()
+        if len(db_col) != len(new_col):
+            col = list(set(new_col).difference(set(db_col)))
+            print(f"{ts_code}有新列增加{col}")
+
+
 # """
 
 if __name__ == "__main__":
-    pro = ts_pro(token)
+    pro = ts.pro_api()
     data = Data(starttime, endtime)
-    data.executes()
-    data.info_sql()
-    # for i in range(3):
-    #     try:
-    #         d0 = pd.read_sql(f"select max(trade_date) from 'test' ", data.conn).values[0][0]
-    #         # print(f'第{ns}/{len(self.stockcodes)}支股票{sc}最新交易日是{d0}，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
-    #         print(d0)
-    #     except Exception as e:
-    #         print(e)
-
-    # data.update_sql()
-    # table_name = pd.read_sql("select name from sqlite_master where type='table' order by name",
-    #                          data.conn).values
-    # for s in table_name:
-    #     print(s)
+    data.get_daily_data()
     # data.executes()
-
-    # # data.null = ['300911.SZ', '300915.SZ', '300916.SZ', '605258.SH', '688557.SH', '688578.SH']
-    # # data.get_daily_data()
-    # for s in data.null:
-    #     d = pd.read_sql(f"select * from '{s}' ", data.conn)
-    #     print(d)
-
-    # null = []
-    # if 'test' not in null:
-    #     print('test')
-
-    # data.checkdb()
-    # data.get_daily_data()
-
-    # print(data.table_name)
-    # print(data.codes)
-    # print(data.stockcodes)
-
-    # test_data = data.stockcodes[:10]
-    # print(test_data.tolist())
-
-
-    # from queue import Queue
-    # q = Queue(maxsize=len(test_data))
-    # for a in  test_data:
-    #     q.put(a)
-    # print(q.get())
-
+    # data.info_sql()
 
 
     # # macos自动关机指令

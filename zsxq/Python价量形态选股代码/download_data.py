@@ -7,7 +7,7 @@ Created on Tue Nov 12 10:29:06 2019
 #只需运行一次即可
 import pandas as pd
 
-from zsxq.base import sql_engine,ts_pro
+from zsxq.base_bak import sql_engine,ts_pro
 
 pro=ts_pro()
 engine = sql_engine()

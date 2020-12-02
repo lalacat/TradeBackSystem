@@ -8,7 +8,7 @@ Created on Mon Nov 11 16:56:13 2019
 import pandas as pd
 import numpy as np
 #import sqlite3 as sq3
-from .base import sql_engine,ts_pro
+from zsxq.database.base import sql_engine,ts_pro
 from dateutil.parser import parse
 from datetime import datetime,timedelta
 

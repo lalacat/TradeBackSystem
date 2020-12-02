@@ -12,7 +12,7 @@ from django.contrib.postgres.lookups import Overlap
 from pyecharts.charts import Line, Bar, Kline
 
 from zsxq.Python价量形态选股代码.RPS import get_code
-from zsxq.base import sql_engine
+from zsxq.base_bak import sql_engine
 
 engine = sql_engine()
 codes,names=get_code()
