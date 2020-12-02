@@ -7,16 +7,17 @@ from datetime import datetime, timedelta
 import sys
 import sqlite3
 import tushare as ts
+from pandas.io.sql import DatabaseError
 
 token = 'e0eeb08befd1f07516df2cbf9cbd58663f77fd72f92a04f290291c9d'
 db_name = 'stock_data.db'
-starttime = '20201120'
+starttime = '20201130'
 endtime = ''  # endtime默认是最近的一个交易日，若未自定请保持''，引号内无空格
 
 
 def sqlo(dbname):
-    path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
-    # path = 'W:\\stock_db'+ '\\'
+    # path = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db'+ '\\'
+    path = 'W:\\stock_db'+ '\\'
     return sqlite3.connect(path + dbname)
 
 
@@ -48,6 +49,7 @@ class Data(object):
         self.start = None
         self.end = None
         self.get_trade_date(start, end)
+        self.fiter_code = ['300911.SZ', '300915.SZ', '300916.SZ', '605258.SH', '688557.SH', '688578.SH']
 
         self.conn = sqlo(db_name)
         self.cur = self.conn.cursor()
@@ -82,29 +84,22 @@ class Data(object):
         else:
             stockcodes = self.codes
         nn = 0
-
-        df0 = pro.daily(ts_code='688106.SH', start_date='20201120', end_date=self.end)
-        print(df0)
-        df0.to_sql('test',self.conn,index=False,if_exists='append')
-
         for stockcode in stockcodes:
-
-            print(stockcode)
-
-            # try:
-            #     df0 = pro.daily(ts_code=stockcode, start_date=self.start, end_date=self.end)
-            #     df1 = pro.adj_factor(ts_code=stockcode, start_date=self.start, end_date=self.end)  # 复权因子
-            #     df = pd.merge(df0, df1)  # 合并数据
-            #     if df.empty:
-            #         print('数据获取失败或该股票在endtime后上市，现跳过其数据获取。')
-            #         nn += 1
-            #         continue
-            #     df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
-            #     nn += 1
-            #     print(f"完成第{nn}支股票 {stockcode} 的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
-            # except Exception as e:
-            #     print(stockcode)
-            #     print(e)
+            try:
+                df0 = pro.daily(ts_code=stockcode, start_date=self.start, end_date=self.end)
+                df1 = pro.adj_factor(ts_code=stockcode, start_date=self.start, end_date=self.end)  # 复权因子
+                df = pd.merge(df0, df1)  # 合并数据
+                if df.empty:
+                    print(f'数据获取失败或该股票在{self.end}后上市，现跳过其数据获取。')
+                    nn += 1
+                    self.fiter_code.append(stockcode)
+                    continue
+                df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
+                nn += 1
+                print(f"完成第{nn}支股票 {stockcode} 的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
+            except Exception as e:
+                print(stockcode)
+                print(e)
 
     # 获取最新交易日期
     def get_trade_date(self, start_time, end_time, now_time=datetime.now()):
@@ -129,11 +124,25 @@ class Data(object):
             self.end = end_time
 
     # 更新数据库数据
-    def update_sql(self):
+    def update_sql(self,codes=None):
         ns = 0
-        for sc in self.codes:
+        if codes and len(codes) > 0:
+            all_codes = codes
+        else:
+            all_codes = self.codes
+        codes = []
+        for sc in all_codes:
             ns += 1
-            d0 = pd.read_sql(f"select max(trade_date) from '{sc[:-3]}' ", self.conn).values[0][0]
+            if sc in self.fiter_code:
+                print(f'{sc}获取失败，现跳过其数据获取。')
+                continue
+            try:
+                d0 = pd.read_sql(f"select max(trade_date) from '{sc[:-3]}' ", self.conn).values[0][0]
+                # print(f'第{ns}/{len(all_codes)}支股票{sc}最新交易日是{d0}，进度：{round(ns / len(all_codes) * 100, 2)}%')
+            except DatabaseError:
+                print(f"[ERROR]第{ns}/{len(all_codes)}支股票{sc}:no such table: {sc}")
+                codes.append(sc)
+                continue
             if d0 != self.end:
                 if d0 is None:
                     d0 = self.start
@@ -147,11 +156,14 @@ class Data(object):
                 df1 = pro.adj_factor(ts_code=sc, start_date=dates[0], end_date=dates[-1])  # 复权因子
                 df = pd.merge(df0, df1)  # 合并数据
                 df.to_sql(sc[:-3], self.conn, index=False, if_exists='append')
-                print(f'第{ns}支股票{sc}数据有更新，正在更新，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
+                print(f'第{ns}/{len(all_codes)}支股票{sc}数据有更新，正在更新，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
             else:
-                print(f'第{ns}支股票{sc}数据无更新，跳过...，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
-            if ns == len(self.stockcodes):
-                print('数据库更新完毕！')
+                print(f'第{ns}/{len(all_codes)}支股票{sc}数据无更新，跳过...，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
+            # if ns == len(self.stockcodes):
+        if codes is not None and len(codes) > 0 :
+            self.update_sql(codes)
+        else:
+            print('数据库更新完毕！')
 
     # 查询数据库信息
     def info_sql(self):
@@ -184,19 +196,23 @@ class Data(object):
                     print(f'股票{tn[0]}退市，现已将其数据从数据库中删除。')
                     c = 1
             if c == 1:  # 删除过数据库里面的列表，需要再更新一次列表
-                table_name = pd.read_sql("select name from sqlite_master where type='table' order by name",
+                # 退市处理
+                all_tables = pd.read_sql("select name from sqlite_master where type='table' order by name",
                                          self.conn).values
-                if 'sqlite_sequence' in table_name:
-                    table_name = table_name[:-1]
-                self.all_tables = table_name
+                if 'sqlite_sequence' in all_tables:
+                    all_tables = all_tables[:-1]
+                self.all_tables = all_tables
             else:
                 null = []
+                # 新上市处理
                 for sc in self.codes:
                     if sc[:-3] not in self.all_tables:
                         null.append(sc)
                 if len(null) > 0:
                     print('股票数据有遗漏，开始查漏补缺...')
                     self.null = null
+                    # print(self.null)
+        # """
                     self.get_daily_data()
             self.update_sql()  # 最后再检查一下有没有更新
 
@@ -237,26 +253,56 @@ class Data(object):
             # 2.3.2 没有退市/上市，检查有没有更新
             else:
                 self.update_sql()
-
+# """
 
 if __name__ == "__main__":
     pro = ts_pro(token)
     data = Data(starttime, endtime)
-    data.checkdb()
+    data.executes()
+    data.info_sql()
+    # for i in range(3):
+    #     try:
+    #         d0 = pd.read_sql(f"select max(trade_date) from 'test' ", data.conn).values[0][0]
+    #         # print(f'第{ns}/{len(self.stockcodes)}支股票{sc}最新交易日是{d0}，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
+    #         print(d0)
+    #     except Exception as e:
+    #         print(e)
+
+    # data.update_sql()
+    # table_name = pd.read_sql("select name from sqlite_master where type='table' order by name",
+    #                          data.conn).values
+    # for s in table_name:
+    #     print(s)
+    # data.executes()
+
+    # # data.null = ['300911.SZ', '300915.SZ', '300916.SZ', '605258.SH', '688557.SH', '688578.SH']
+    # # data.get_daily_data()
+    # for s in data.null:
+    #     d = pd.read_sql(f"select * from '{s}' ", data.conn)
+    #     print(d)
+
+    # null = []
+    # if 'test' not in null:
+    #     print('test')
+
+    # data.checkdb()
     # data.get_daily_data()
+
     # print(data.table_name)
     # print(data.codes)
     # print(data.stockcodes)
-    test_data = data.stockcodes[:10]
-    print(test_data.tolist())
-    from queue import Queue
-    q = Queue(maxsize=len(test_data))
-    for a in  test_data:
-        q.put(a)
-    print(q.get())
 
-    # data.executes()
-    # data.info_sql()
+    # test_data = data.stockcodes[:10]
+    # print(test_data.tolist())
+
+
+    # from queue import Queue
+    # q = Queue(maxsize=len(test_data))
+    # for a in  test_data:
+    #     q.put(a)
+    # print(q.get())
+
+
 
     # # macos自动关机指令
     # import os
