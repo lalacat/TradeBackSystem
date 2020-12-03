@@ -26,22 +26,22 @@ def plot_data(condition,title):
         table_names = table_names[:-1]
     all_tables = table_names
     temp = None
-    for table in all_tables:
+    n = 1
+    for table in all_tables[:100]:
 
         sql=f"select distinct * from '{table[0]}' where trade_date>'20190101' and "+ condition
         data=pd.read_sql(sql,engine)
+        print(f"第{n}/{len(all_tables[:100])}:{table[0]}已筛选！")
         if temp is None:
             temp = data
         else:
             temp = pd.concat([data, temp], axis=0)
-
+        n += 1
     count_=temp.groupby('trade_date')['ts_code'].count()
     # print(count_)
     attr=count_.index.values.tolist()
     v1=count_.values.tolist()
 
-    print(attr)
-    print(v1)
     bar=Bar()
     # # bar= BAR(title)
     bar.add_xaxis(attr)
@@ -53,11 +53,11 @@ def plot_data(condition,title):
 
 if __name__ == "__main__":
     c1="close<20"
-    t1="股价低于20元个股时间分布"
-    plot_data(c1,t1)
-    # c2="pe<30 and pe>0"
-    # t2="市盈率低于30倍数量"
-    # plot_data(c2,t2)
+    # t1="股价低于20元个股时间分布"
+    # plot_data(c1,t1)
+    c2="pe<30"
+    t2="市盈率低于30倍数量"
+    plot_data(c2,t2)
 
 
 
