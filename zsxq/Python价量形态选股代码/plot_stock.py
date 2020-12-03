@@ -7,7 +7,7 @@ Created on Tue Nov 12 22:01:39 2019
 
 import pandas as pd  
 import numpy as np
-from pyecharts import Kline,Line, Bar,Overlap
+from pyecharts.charts import Kline,Line, Bar
 from zsxq.database.base import sql_engine,ts_pro
 
 pro=ts_pro()

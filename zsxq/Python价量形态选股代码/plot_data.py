@@ -16,18 +16,39 @@ from zsxq.database.base import sql_engine
 # engine = sql_engine('sqlite:///c:\\zjy\\select_stock\\stock_data.db')
 engine = sql_engine()
 
-from pyecharts.charts.basic_charts import Bar
+from pyecharts.charts import Bar
 
 def plot_data(condition,title):
     #distinct删除重复值
-    sql="select distinct * from '002192' where trade_date>'20190101' and "+ condition
-    data=pd.read_sql(sql,engine)
-    count_=data.groupby('trade_date')['ts_code'].count()
-    attr=count_.index
-    v1=count_.values
-    bar=Bar(title,title_text_size=15)
-    # bar= BAR(title)
-    bar.add('',attr,v1,is_splitline_show=False,is_datazoom_show=True,linewidth=2)
+    table_names = pd.read_sql(
+        "select name from sqlite_master where type='table' order by name",engine).values
+    if 'sqlite_sequence' in table_names:
+        table_names = table_names[:-1]
+    all_tables = table_names
+    temp = None
+    for table in all_tables:
+
+        sql=f"select distinct * from '{table[0]}' where trade_date>'20190101' and "+ condition
+        data=pd.read_sql(sql,engine)
+        if temp is None:
+            temp = data
+        else:
+            temp = pd.concat([data, temp], axis=0)
+
+    count_=temp.groupby('trade_date')['ts_code'].count()
+    # print(count_)
+    attr=count_.index.values.tolist()
+    v1=count_.values.tolist()
+
+    print(attr)
+    print(v1)
+    bar=Bar()
+    # # bar= BAR(title)
+    bar.add_xaxis(attr)
+    bar.add_yaxis('',v1)
+    # # bar.add('',attr,v1,is_splitline_show=False,is_datazoom_show=True,linewidth=2)
+    # bar.render()
+
     bar.render(title+'.html')
 
 if __name__ == "__main__":

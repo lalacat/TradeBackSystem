@@ -9,8 +9,9 @@ import sqlite3
 from sqlalchemy import create_engine
 
 # filename='sqlite:///X:\\股票\\db_stock\\'
-filename = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db' + '\\'
+# filename = 'C:\\Users\\scott\\Documents\\学习文档\\stock_db' + '\\'
 # filename = 'W:\\stock_db'+ '\\'
+filename = 'X:\\股票'+ '\\'
 db_name='stock_data.db'
 
 def sql_engine(file=filename,db=db_name):

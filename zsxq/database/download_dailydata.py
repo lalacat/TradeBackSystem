@@ -12,7 +12,7 @@ from zsxq.database.base import sql_engine, ts_pro,ts
 
 token = 'e0eeb08befd1f07516df2cbf9cbd58663f77fd72f92a04f290291c9d'
 db_name = 'stock_data.db'
-starttime = '20201130'
+starttime = '20150101'
 endtime = ''  # endtime默认是最近的一个交易日，若未自定请保持''，引号内无空格
 
 
@@ -82,11 +82,14 @@ class Data(object):
             self.all_tables = []
 
     # 每日行情数据
-    def get_daily_data(self):
-        if self.null is not None:
-            stockcodes = self.null
+    def get_daily_data(self,codes=None):
+        if codes is not None:
+            stockcodes = codes
         else:
-            stockcodes = self.codes
+            if self.null is not None:
+                stockcodes = self.null
+            else:
+                stockcodes = self.codes
         nn = 0
         for stockcode in stockcodes:
             try:
@@ -96,10 +99,10 @@ class Data(object):
                     nn += 1
                     self.fiter_code.append(stockcode)
                     continue
-                self._check_col(stockcode,df)
-                # df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
-                # nn += 1
-                # print(f"完成第{nn}支股票 {stockcode} 的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
+                # self._check_col(stockcode,df)
+                df.to_sql(stockcode[:-3], self.conn, index=False, if_exists='append')
+                nn += 1
+                print(f"完成第{nn}/{len(stockcodes)}支股票支股票 {stockcode} 共计{len(df)}条的数据获取与保存，进度：{round(nn/len(stockcodes)*100, 2)}%")
             except Exception as e:
                 print(stockcode)
                 print(e)
@@ -143,7 +146,9 @@ class Data(object):
                 d0 = pd.read_sql(f"select max(trade_date) from '{sc[:-3]}' ", self.conn).values[0][0]
             except DatabaseError:
                 print(f"[ERROR]第{ns}/{len(all_codes)}支股票{sc}:no such table: {sc}")
-                codes.append(sc)
+                if sc not in self.fiter_code:
+                    self.get_daily_data([sc])
+                    codes.append(sc)
                 continue
             if d0 != self.end:
                 if d0 is None:
@@ -152,14 +157,14 @@ class Data(object):
                 n1 = np.argwhere(self.cals == self.end)[0][0] + 1
                 dates = self.cals[n0:n1]
                 df = self._get_newdata(ts_code=sc, start_date=dates[0], end_date=dates[-1])
+                # self._check_col(sc,df)
                 if df.empty:
                     print(f'股票{sc}已停牌，跳过其数据获取')
                     continue
                 df.to_sql(sc[:-3], self.conn, index=False, if_exists='append')
-                print(f'第{ns}/{len(all_codes)}支股票{sc}数据有更新，正在更新，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
+                print(f'第{ns}/{len(all_codes)}支股票{sc}数据有更新，更新{len(df)}条数据，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
             else:
                 print(f'第{ns}/{len(all_codes)}支股票{sc}数据无更新，跳过...，进度：{round(ns / len(self.stockcodes) * 100, 2)}%')
-            # if ns == len(self.stockcodes):
         if codes is not None and len(codes) > 0 :
             self.update_sql(codes)
         else:
@@ -263,16 +268,20 @@ class Data(object):
             return df0
         else:
             df1 = pro.daily_basic(ts_code=ts_code, start_date=start_date)
+            del df1['close']
         df = pd.merge(df0, df1)
         return df
 
     def _check_col(self,ts_code,new_df):
         sql1 = f"PRAGMA  table_info('{ts_code}')"
-        db_col =  pd.read_sql(sql1,self.conn)['name'].values.tolist()
+        db_col = pd.read_sql(sql1,self.conn)['name'].values.tolist()
         new_col = new_df.columns.values.tolist()
         if len(db_col) != len(new_col):
             col = list(set(new_col).difference(set(db_col)))
-            print(f"{ts_code}有新列增加{col}")
+            # print(f"{ts_code}有新列增加{col}")
+            for c in col:
+                add_col_sql = f'ALTER TABLE "{ts_code}" ADD COLUMN {c} real'
+                engine.execute(add_col_sql)
 
 
 # """
@@ -280,8 +289,8 @@ class Data(object):
 if __name__ == "__main__":
     pro = ts.pro_api()
     data = Data(starttime, endtime)
-    data.get_daily_data()
-    # data.executes()
+    # data.get_daily_data()
+    data.executes()
     # data.info_sql()
 
 
@@ -290,3 +299,8 @@ if __name__ == "__main__":
     # password = "锁屏密码输入到引号内"
     # command = "sudo shutdown -h now"
     # os.system('echo %s | sudo -S %s' % (password, command))
+
+    # data.info_sql()
+    # for tn in data.all_tables:
+    #     data.cur.execute(f"drop table '{tn[0]}'")
+    #     print(f'股票{tn[0]}退市，现已将其数据从数据库中删除。')
