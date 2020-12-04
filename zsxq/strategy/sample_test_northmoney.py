@@ -84,17 +84,17 @@ class my_strategy1(bt.Strategy):
         print('%s, %s' % (dt.isoformat(), txt))
 
     def next(self):
-        # if self.order:  # 检查是否有指令等待执行,
-        #     print(self.order)
-        #     return
-        # if not self.position:  # 没有持仓
-        if self.closeprice[-1] > self.upper[-1]:
-            self.order = self.buy(price=self.data.open[0],size=100)
-            self.log('开仓在%f'%self.data.open[0])
+        if self.order:  # 检查是否有指令等待执行,
+            # print(self.order)
+            return
+        if not self.position:  # 没有持仓
+            if self.closeprice[-1] > self.upper[-1]:
+                self.order = self.buy(price=self.data.open[0],size=100)
+                self.log('开仓在%f'%self.data.open[0])
 
-        if self.closeprice[-1] < self.lower[-1]:
-            self.order = self.sell(price=self.data.open[0],size=100)
-            self.log('平仓在%f'%self.data.open[0])
+            if self.closeprice[-1] < self.lower[-1]:
+                self.order = self.sell(price=self.data.open[0],size=100)
+                self.log('平仓在%f'%self.data.open[0])
         # print(self.position)
 
 class NorthMoney(PandasData):
@@ -109,9 +109,9 @@ def main():
     cerebro = bt.Cerebro()
     #回测期间
     # start=datetime(2020, 1, 1)
-    start= '20200101'
+    start= '20190101'
     # end=datetime(2020,11, 24)
-    end='20201124'
+    end='20201202'
     # 加载数据
     s = get_code_data('002475.SZ', start, end)
     data = NorthMoney(dataname=s,fromdate=pd.to_datetime(start),todate=pd.to_datetime(end))
