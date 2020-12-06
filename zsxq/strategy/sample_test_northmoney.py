@@ -84,17 +84,17 @@ class my_strategy1(bt.Strategy):
         print('%s, %s' % (dt.isoformat(), txt))
 
     def next(self):
-        if self.order:  # 检查是否有指令等待执行,
-            # print(self.order)
-            return
-        if not self.position:  # 没有持仓
-            if self.closeprice[-1] > self.upper[-1]:
-                self.order = self.buy(price=self.data.open[0],size=100)
-                self.log('开仓在%f'%self.data.open[0])
+        # if self.order:  # 检查是否有指令等待执行,
+        #     # print(self.order)
+        #     return
+        # if not self.position:  # 没有持仓
+        if self.closeprice[-1] > self.upper[-1]:
+            self.order = self.buy(price=self.data.open[0],size=100)
+            self.log('开仓在%f'%self.data.open[0])
 
-            if self.closeprice[-1] < self.lower[-1]:
-                self.order = self.sell(price=self.data.open[0],size=100)
-                self.log('平仓在%f'%self.data.open[0])
+        if self.closeprice[-1] < self.lower[-1]:
+            self.order = self.sell(price=self.data.open[0],size=100)
+            self.log('平仓在%f'%self.data.open[0])
         # print(self.position)
 
 class NorthMoney(PandasData):

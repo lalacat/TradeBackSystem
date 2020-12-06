@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 # from pyecharts import Kline,Line, Bar,Overlap
 from django.contrib.postgres.lookups import Overlap
-from pyecharts.charts import Line, Bar, Kline
+from pyecharts import Line, Bar, Kline
 
 from zsxq.Python价量形态选股代码.RPS import get_code
 from zsxq.base_bak import sql_engine

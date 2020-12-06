@@ -12,7 +12,7 @@ from zsxq.database.base import sql_engine, ts_pro,ts
 
 token = 'e0eeb08befd1f07516df2cbf9cbd58663f77fd72f92a04f290291c9d'
 db_name = 'stock_data.db'
-starttime = '20150101'
+starttime = '20201201'
 endtime = ''  # endtime默认是最近的一个交易日，若未自定请保持''，引号内无空格
 
 
@@ -264,7 +264,8 @@ class Data(object):
             df0 = ts.pro_bar(ts_code=ts_code, start_date=start_date, end_date=end_date ,adj='qfq', adjfactor=True)# 复权因子
         except IOError:
             df0 = pd.DataFrame()
-        if df0.empty:
+        if df0 is None or df0.empty:
+            df0 = pd.DataFrame()
             return df0
         else:
             df1 = pro.daily_basic(ts_code=ts_code, start_date=start_date)
@@ -292,7 +293,6 @@ if __name__ == "__main__":
     # data.get_daily_data()
     data.executes()
     # data.info_sql()
-
 
     # # macos自动关机指令
     # import os

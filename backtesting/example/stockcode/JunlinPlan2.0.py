@@ -237,9 +237,12 @@ class JunLinPlan():
 
 
 
-path1 = r'C:\Users\scott\Desktop\invest\君临计划-消费.xlsx'
-path2 = r'C:\Users\scott\Desktop\invest\君临计划-科技.xlsx'
-path3 = r'C:\Users\scott\Desktop\invest\君临计划-医药.xlsx'
+# path1 = r'C:\Users\scott\Desktop\invest\君临计划-消费.xlsx'
+# path2 = r'C:\Users\scott\Desktop\invest\君临计划-科技.xlsx'
+# path3 = r'C:\Users\scott\Desktop\invest\君临计划-医药.xlsx'
+path1 = r'X:\股票\君临计划-消费.xlsx'
+path2 = r'X:\股票\君临计划-科技.xlsx'
+path3 = r'X:\股票\君临计划-医药.xlsx'
 paths = [path1,path2,path3]
 JL = JunLinPlan()
 today = '20200920'
