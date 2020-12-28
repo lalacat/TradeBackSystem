@@ -22,13 +22,13 @@ def sql_engine(file=filename,db=db_name):
 
 def ts_pro():
     import tushare as ts 
-    token='e0eeb08befd1f07516df2cbf9cbd58663f77fd72f92a04f290291c9d'
+    token='f6b511d8d4529f19319e1861edadda749e64a5b8573102deec80cfd8'
     pro=ts.pro_api(token)
     return pro
 
 def ts():
     import tushare as ts
-    token = 'e0eeb08befd1f07516df2cbf9cbd58663f77fd72f92a04f290291c9d'
+    token = 'f6b511d8d4529f19319e1861edadda749e64a5b8573102deec80cfd8'
     ts.set_token(token)
     return ts
 
@@ -48,4 +48,10 @@ def get_data(ts_code,start_date=None,end_date=None):
             data = data[start_date:end_date]
         return data
 
+def get_code_data(code, start, end):
+    df =get_data(ts_code=code, start_date=start, end_date=end)
+    df['openinterest']=0
+    df=df[['open','high','low','close','amount','openinterest']]
+    df.columns =['open','high','low','close','volume','openinterest']
+    return df
 

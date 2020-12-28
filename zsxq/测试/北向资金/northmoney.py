@@ -13,7 +13,7 @@ mpl.rcParams['font.sans-serif']=['SimHei']
 mpl.rcParams['axes.unicode_minus']=False
 
 import tushare as ts
-token='e0eeb08befd1f07516df2cbf9cbd58663f77fd72f92a04f290291c9d'
+token='f6b511d8d4529f19319e1861edadda749e64a5b8573102deec80cfd8'
 pro=ts.pro_api(token)
 
 

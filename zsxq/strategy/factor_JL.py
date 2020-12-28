@@ -20,18 +20,34 @@ mpl.rcParams['axes.unicode_minus']=False
 
 
 
-def get_code_data(code, start, end):
-    df =get_data(ts_code=code, start_date=start, end_date=end)
+def get_sheet_data(path,sheet_name=None):
+    # 基础信息
+    data = pd.read_excel(path, sheet_name=0, header=1)
+    name = data['公司'].iloc[0]
+    code = data['代码'].iloc[0]
+    d = data.iloc[:, -6:-1]
+    d.columns = ['trade_data', 'down', 'mid_01', 'mid_02', 'up']
+    d.index = pd.to_datetime(d['trade_data'], format='%Y%m%d')
+    d['mid'] = (d['mid_01'] + d['mid_02']) / 2
+    value_data = d[['down', 'mid', 'up']]
+    start= d.index[0].strftime('%Y%m%d')
+
+    # 交易信息
+    df =get_data(ts_code=code[:-3], start_date=start)
     df['openinterest']=0
-    df=df[['open','high','low','close','amount','openinterest','turnover_rate','pe','pb']]
-    df.columns =['open','high','low','close','volume','openinterest','turnover_rate','pe','pb' ]
-    return df
+    final = pd.concat([df, value_data], axis=1)
+    final=final[['open','high','low','close','amount','openinterest','down','mid','up']]
+    return final,name
 
 
-class Factor_PE(bt.Strategy):
+class Factor_JL(bt.Strategy):
 
     def __init__(self):
-        pass
+        self.close = self.data.close
+        self.open  = self.data.open
+        self.down = self.data.down
+        self.up = self.data.up
+        self.mid = self.data.mid
     # 全局设定交易策略的参数
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.date(0)
@@ -39,34 +55,25 @@ class Factor_PE(bt.Strategy):
     #
     def next(self):
         if not self.position:  # 没有持仓
-            if self.datas[0].turnover_rate[0] < 2.308 and 0 < self.datas[0].pe[0] < 50:
+            if self.close[-1] <= self.down[-1] :
                 # 得到当前的账户价值
                 total_value = self.broker.getvalue()
                 # 1手=100股，满仓买入
-                ss = int((total_value / 100) / self.datas[0].close[0]) * 100
+                ss = int((total_value / 100) / self.open[0]) * 100
                 self.order = self.buy(size=ss)
-                # self.log('开仓在%f' % self.data.close[0])
+                self.log('开仓在%f' % self.data.close[0])
 
-        else:  # 持仓，满足条件全部卖出
-            if self.datas[0].turnover_rate[0] > 10 or self.datas[0].pe[0] > 80:
-                self.close(self.datas[0])
-                # self.log('平仓在%f' % self.data.close[0])
+        elif self.close[-1]> self.up[-1] :
+                self.close(self.open[0])
+                self.log('平仓在%f' % self.data.close[0])
+
+    def start(self):
+        self.log('{%s}进行回测' % self.data._name)
 
 
-class Factor_PE_2(bt.Strategy):
-    # 全局设定交易策略的参数
-    def log(self, txt, dt=None):
-        dt = dt or self.datas[0].datetime.date(0)
-        print('%s, %s' % (dt.isoformat(), txt))
-
-    def next(self):
-        for data in self.datas:
-            print(data._name)
-            # self.log(f"换手率:{data.turnover_rate[0]},市净率:{data.pb[0]},市盈率:{data.pe[0]}")
-
-class ExtraFactor(PandasData):
-    lines = ('turnover_rate', 'pe', 'pb',)
-    params = (('turnover_rate', -1), ('pe', -1), ('pb', -1),)
+class FactorJL(PandasData):
+    lines = ('down', 'mid', 'up',)
+    params = (('down', -1), ('mid', -1), ('up', -1),)
 
 
 
@@ -88,44 +95,27 @@ def kline_plot(df,name):
     overlap.add(bar,yaxis_index=1, is_add_yaxis=True)
     return overlap
 
+path1 = r'X:\股票\君临计划-消费.xlsx'
+
 
 
 # 初始化cerebro回测系统设置
 cerebro = bt.Cerebro()
 
 #回测期间
-start = '20150101'
-end = '20201202'
-s = get_code_data('603345',start,end)
-tr = s['turnover_rate']
-tr_mean = tr.mean()
 
+data,name= get_sheet_data(path1)
 
-feed = ExtraFactor(dataname=s,name='融捷股份')
-print(type(feed))
+feed = FactorJL(dataname=data,name=name)
 cerebro.adddata(feed)
-cerebro.addstrategy(Factor_PE)
+cerebro.addstrategy(Factor_JL)
 
-"""
-# 加载多个数据
-codes =  ['603345','603317','002891']
-for c in codes:
-    s = get_code_data(c, start, end)
-    feed = ExtraFactor(dataname=s,name=c)
-    #将数据传入回测系统
-    cerebro.adddata(feed)
-# 将交易策略加载到回测系统中
-cerebro.addstrategy(Factor_PE_2)
-"""
 
 startcash = 100000
 cerebro.broker.setcash(startcash)
 cerebro.broker.setcommission(commission=0.001)
 
 cerebro.run()
-cerebro.plot(iplot=False)
-
-df00,df0,df1,df2,df3,df4=out_result(Factor_PE,feed,startcash = 100000,commission=0.001)
 
 portvalue = cerebro.broker.getvalue()
 pnl = portvalue - startcash
@@ -133,8 +123,18 @@ pnl = portvalue - startcash
 print(f'期初总资金: {round(startcash,2)}')
 print(f'期末总资金: {round(portvalue,2)}')
 print(f'净收益: {round(pnl,2)}')
+
+
+
+
+
+# cerebro.plot(volume=False,iplot=False)
+
+# df00,df0,df1,df2,df3,df4=out_result(Factor_JL,feed,startcash = 100000,commission=0.001)
 #
-# p = kline_plot(s,'神州泰岳')
-# p.render()
-# plt.show()
-print(df00)
+
+# #
+# # p = kline_plot(s,'神州泰岳')
+# # p.render()
+# # plt.show()
+# print(df00)
