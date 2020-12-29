@@ -12,6 +12,9 @@ QQ群: Top极宽量化总群，124134140
 '''
 
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 
 #
@@ -23,8 +26,7 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-import topquant2019 as tq
-#   
+#
 #
 #----------------------
 # 创建一个：最简单的MA均线策略类class

@@ -12,6 +12,9 @@ QQ群: Top极宽量化总群，124134140
 '''
 
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 
 #
@@ -23,8 +26,7 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):
@@ -167,14 +169,14 @@ tq_ksty10=dict(volup=tq10_corUp,voldown=tq10_corDown,barup =tq10_corUp,bardown =
 
 class MyBuySell(bt.observers.BuySell):
     plotlines = dict(
-        #buy=dict(marker='$\u21E7$', markersize=12.0),  #arrow
-        #sell=dict(marker='$\u21E9$', markersize=12.0)
+        buy=dict(marker='$\u21E7$', markersize=12.0),  #arrow
+        sell=dict(marker='$\u21E9$', markersize=12.0)
         #
-        #buy=dict(marker='$++$', markersize=12.0),
-        #sell=dict(marker='$--$', markersize=12.0)
+        # buy=dict(marker='$++$', markersize=12.0),
+        # sell=dict(marker='$--$', markersize=12.0)
         #
-        buy=dict(marker='$✔$', markersize=12.0),
-        sell=dict(marker='$✘$', markersize=12.0)
+        # buy=dict(marker='$✔$', markersize=12.0),
+        # sell=dict(marker='$✘$', markersize=12.0)
     )
 
 #----------
@@ -225,8 +227,9 @@ cerebro.broker.setcommission(commission=0.001)
 print('\n\t#2-5,设置每手交易数目为：10，不再使用默认值：1手')
 cerebro.addsizer(bt.sizers.FixedSize, stake=10)
 #
-#cerebro.addobserver(bt.observers.Value)
-#cerebro.addobserver(bt.observers)
+# 相当于增加了一个子图，显示Value的
+# cerebro.addobserver(bt.observers.Value)
+# cerebro.addobserver(bt.observers)
 bt.observers.BuySell = MyBuySell
 #bt.observers.BuySell = tq.ksyb_BuySell(xmbuy='$++$',xmsell='$--$')
 #bt.observers.BuySell = tq.ksyb_BuySell
@@ -260,22 +263,22 @@ print('\t注意各种不同参数，引起的图形变化')
 
 #1 sty-cor+arrow
 #cerebro.plot(style='bar',**tq_ksty10)
-cerebro.plot(style='candle',**tq_ksty10)
+cerebro.plot(style='candle',**tq_ksty09,iplot=False)
 
 
 #
 #2 volume
-#cerebro.plot(volume =False)             #取消volume成交量图形，默认为 True
-#cerebro.plot(volume =True,voloverlay  =True)        #volume成交量：采用subplot子图模式，默认为voloverlay=True叠加模式
+# cerebro.plot(volume =False)             #取消volume成交量图形，默认为 True
+# cerebro.plot(volume =True,voloverlay=True,iplot=False)        #volume成交量：采用subplot子图模式，默认为voloverlay=True叠加模式
 #
 #3
 #plot多图拼接，BT版的股市：《清明上河图》
 #注意修改其实日期参数为：空字符串
 #numfigs，默认值为：1
-#cerebro.plot(numfigs=1)
+# cerebro.plot(numfigs=1,iplot=False)
 
 #5 ha-k line
-#cerebro.plot(style='candle')
+# cerebro.plot(style='candle',iplot=False)
 #
 
 

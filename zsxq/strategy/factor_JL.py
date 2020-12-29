@@ -22,7 +22,7 @@ mpl.rcParams['axes.unicode_minus']=False
 
 def get_sheet_data(path,sheet_name=None):
     # 基础信息
-    data = pd.read_excel(path, sheet_name=0, header=1)
+    data = pd.read_excel(path, sheet_name=3 ,header=1)
     name = data['公司'].iloc[0]
     code = data['代码'].iloc[0]
     d = data.iloc[:, -6:-1]
@@ -37,6 +37,7 @@ def get_sheet_data(path,sheet_name=None):
     df['openinterest']=0
     final = pd.concat([df, value_data], axis=1)
     final=final[['open','high','low','close','amount','openinterest','down','mid','up']]
+    final.columns = ['open','high','low','close','volume','openinterest','down','mid','up']
     return final,name
 
 
@@ -48,6 +49,7 @@ class Factor_JL(bt.Strategy):
         self.down = self.data.down
         self.up = self.data.up
         self.mid = self.data.mid
+        self.Jl = LinesJl(self.data)
     # 全局设定交易策略的参数
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.date(0)
@@ -75,7 +77,14 @@ class FactorJL(PandasData):
     lines = ('down', 'mid', 'up',)
     params = (('down', -1), ('mid', -1), ('up', -1),)
 
+class LinesJl(bt.Indicator):
+    lines = ('down','mid','up',)
+    plotinfo = dict(subplot=True)
 
+    def __init__(self):
+        self.lines.down = self.data.down
+        self.lines.mid = self.data.mid
+        self.lines.up = self.data.up
 
 def kline_plot(df,name):
     #画K线图数据
@@ -106,6 +115,8 @@ cerebro = bt.Cerebro()
 
 data,name= get_sheet_data(path1)
 
+
+
 feed = FactorJL(dataname=data,name=name)
 cerebro.adddata(feed)
 cerebro.addstrategy(Factor_JL)
@@ -116,25 +127,17 @@ cerebro.broker.setcash(startcash)
 cerebro.broker.setcommission(commission=0.001)
 
 cerebro.run()
-
-portvalue = cerebro.broker.getvalue()
-pnl = portvalue - startcash
-#打印结果
-print(f'期初总资金: {round(startcash,2)}')
-print(f'期末总资金: {round(portvalue,2)}')
-print(f'净收益: {round(pnl,2)}')
-
-
-
-
-
-# cerebro.plot(volume=False,iplot=False)
-
-# df00,df0,df1,df2,df3,df4=out_result(Factor_JL,feed,startcash = 100000,commission=0.001)
 #
+# portvalue = cerebro.broker.getvalue()
+# pnl = portvalue - startcash
+# #打印结果
+# print(f'期初总资金: {round(startcash,2)}')
+# print(f'期末总资金: {round(portvalue,2)}')
+# print(f'净收益: {round(pnl,2)}')
 
-# #
-# # p = kline_plot(s,'神州泰岳')
-# # p.render()
-# # plt.show()
-# print(df00)
+
+
+
+
+cerebro.plot(iplot=False)
+

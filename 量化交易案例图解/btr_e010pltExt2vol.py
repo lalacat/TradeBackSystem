@@ -12,6 +12,9 @@ QQ群: Top极宽量化总群，124134140
 '''
 
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 
 #
@@ -23,8 +26,7 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):
@@ -265,11 +267,11 @@ print('\t注意各种不同参数，引起的图形变化')
 
 #
 #2 volume
-cerebro.plot(iplot=False,style='candle')
+# cerebro.plot(iplot=False,style='candle')
 #cerebro.plot(style='candle',volume =False)             #取消volume成交量图形，默认为 True
-#cerebro.plot(style='candle',volume =True)      
-#cerebro.plot(style='candle',volume =True,voloverlay  =False)        #volume成交量：采用subplot子图模式，默认为voloverlay=True叠加模式
-#cerebro.plot(style='candle',volume =False,voloverlay  =False)    
+cerebro.plot(style='candle',volume =True,iplot=False)
+# cerebro.plot(style='candle',volume =True,voloverlay=False,iplot=False)        #volume成交量：采用subplot子图模式，默认为voloverlay=True叠加模式
+# cerebro.plot(style='candle',volume =False,voloverlay  =False,iplot=False)
 #
 #3
 #plot多图拼接，BT版的股市：《清明上河图》

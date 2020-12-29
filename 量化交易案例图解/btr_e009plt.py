@@ -10,7 +10,9 @@ by Top极宽·量化开源团队 2019.01.011 首发
 QQ群: Top极宽量化总群，124134140
 
 '''
-import sys;
+import sys
+
+from zsxq.database.base import get_code_data
 sys.path.append("topqt/")
 
 #
@@ -22,8 +24,7 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):
@@ -203,11 +204,11 @@ print('\t注意图形当中,最上面的的cash现金，value资产曲线')
 print('\n\t分别运行一下各种不同参数的plot绘图命令')
 print('\t注意每次运行只运行一条plot，其他的用#注释符号屏蔽')
 print('\t各种k线图模式：线条图、candle蜡烛图、ohlc曲线图')
-cerebro.plot(iplot=False)                 #默认是line线条图,或者上一次设置参数
-#cerebro.plot(style='line')     #line线条图
-#cerebro.plot(style='candle')   #candle蜡烛图
-#cerebro.plot(style='bar')       #ohlc曲线图,美式k线图
-#cerebro.plot(style='ohlc')       #ohlc曲线图.美式k线图
+# cerebro.plot(iplot=False)                 #默认是line线条图,或者上一次设置参数
+# cerebro.plot(style='line')     #line线条图
+cerebro.plot(style='candle',iplot=False)   #candle蜡烛图
+# cerebro.plot(style='bar',iplot=False)       #ohlc曲线图,美式k线图
+# cerebro.plot(style='ohlc',iplot=False)       #ohlc曲线图.美式k线图
 
 #---------
 #
