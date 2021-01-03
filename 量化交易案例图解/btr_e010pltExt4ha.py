@@ -12,6 +12,9 @@ QQ群: Top极宽量化总群，124134140
 '''
 
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 
 #
@@ -258,8 +261,8 @@ print('\t注意各种不同参数，引起的图形变化')
 #cerebro.plot() 
 
 #1 sty-cor+arrow
-#cerebro.plot(style='bar',**tq_ksty10)
-#cerebro.plot(style='candle',**tq_ksty10)
+# cerebro.plot(style='bar',**tq_ksty10,iplot=False)
+cerebro.plot(style='candle',**tq_ksty10,iplot=False)
 
 
 #
@@ -274,7 +277,7 @@ print('\t注意各种不同参数，引起的图形变化')
 #cerebro.plot(numfigs=5)
 
 #5 ha-k line
-cerebro.plot(style='candle')
+# cerebro.plot(style='candle',iplot=False)
 #
 
 

@@ -104,7 +104,7 @@ print('\t@数据文件名：',fdat)
 print('\t设置数据BT回溯运算：起始时间、结束时间')  
 print('\t数据文件,可以是股票期货、外汇黄金、数字货币等交易数据')  
 print('\t格式为：标准OHLC格式，可以是日线、分时数据。')  
-t0str,t9str='2018-10-01','2018-12-31'
+t0str,t9str='2018-10-01','2019-12-31'
 data=bt.feeds.PandasData(dataname=get_code_data(xcod,t0str,t9str))
 
 #

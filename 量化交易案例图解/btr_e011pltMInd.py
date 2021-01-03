@@ -10,7 +10,10 @@ by Top极宽·量化开源团队 2019.01.011 首发
 QQ群: Top极宽量化总群，124134140
 
 '''
-import sys;
+import sys
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 #
 import matplotlib as mpl
@@ -23,8 +26,7 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):
@@ -59,7 +61,7 @@ class TQSta001(bt.Strategy):
         
         #
         #MACD曲线，设置为非子图模式：subplot=False
-        bt.indicators.MACDHisto(self.datas[0],subplot=True)
+        bt.indicators.MACDHisto(self.datas[0],subplot=False)
         #
         # 增加一系列指标，指标图，除均线外，大部分默认都是子图模式：subplot=True
         bt.indicators.ExponentialMovingAverage(self.datas[0], period=25)
@@ -188,7 +190,7 @@ print('\t设置数据BT回溯运算：起始时间、结束时间')
 print('\t数据文件,可以是股票期货、外汇黄金、数字货币等交易数据')  
 print('\t格式为：标准OHLC格式，可以是日线、分时数据。')  
 t0str,t9str='2018-10-01','2018-12-31'
-t9str=''
+# t9str=''
 #t0str,t9str='',''
 data=bt.feeds.PandasData(dataname=get_code_data(xcod,t0str,t9str))
 #

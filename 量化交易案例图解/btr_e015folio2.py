@@ -11,6 +11,9 @@ QQ群: Top极宽量化总群，124134140
 
 '''
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 
 #
@@ -28,8 +31,7 @@ from pyfolio.utils import to_utc, to_series
 import backtrader as bt
 from backtrader.analyzers import SQN, AnnualReturn, TimeReturn, SharpeRatio,TradeAnalyzer
 #
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):

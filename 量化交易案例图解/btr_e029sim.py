@@ -11,6 +11,9 @@ QQ群: Top极宽量化总群，124134140
 
 '''
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 #
 import matplotlib as mpl
@@ -25,8 +28,7 @@ import backtrader as bt
 from backtrader.analyzers import SQN, AnnualReturn, TimeReturn, SharpeRatio,TradeAnalyzer
 
 #
-import topquant2019 as tq
-#   
+#
 #----------------------
 
 # 创建一个：最简单的MA均线策略类class
@@ -40,9 +42,8 @@ class ma(bt.Strategy):
         # 增强型log记录函数，带fgPrint打印开关变量
         if self.params.fgPrint or fgPrint:
             dt = dt or self.datas[0].datetime.datetime(0)
-            tn=tq.timNSec('',self.tim0wrk)
-            #print('%s, %s，tn：%.2f' % (dt.isoformat(), txt))
-            print('%s, %s，tim：%.2f s' % (dt.isoformat(), txt,tn))            
+            print('%s, %s' % (dt.isoformat(), txt))
+            # print('%s, %s，tim：%.2f s' % (dt.isoformat(), txt,tn))
 
     def __init__(self,vdict={}):
         # 默认数据，一般使用股票池当中，下标为0的股票，
@@ -182,7 +183,7 @@ print('\t格式为：标准OHLC格式，可以是日线、分时数据。')
 #t0str,t9str='2010-01-01','2018-12-31'
 #t0str,t9str='2018-01-01','2018-12-31'
 t0str,t9str='2018-10-01','2018-12-31'
-t0str,t9str='2018-10-01',''
+# t0str,t9str='2018-10-01',''2018-10-01
 data=bt.feeds.PandasData(dataname=get_code_data(xcod,t0str,t9str))
 
 #

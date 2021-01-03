@@ -12,6 +12,7 @@ QQ群: Top极宽量化总群，124134140
 '''
 import sys;
 sys.path.append("topqt/")
+from zsxq.database.base import get_code_data
 
 #
 import matplotlib as mpl
@@ -28,8 +29,7 @@ from pyfolio.utils import to_utc, to_series
 import backtrader as bt
 from backtrader.analyzers import SQN, AnnualReturn, TimeReturn, SharpeRatio,TradeAnalyzer
 #
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):
@@ -175,7 +175,7 @@ print('\t设置数据BT回溯运算：起始时间、结束时间')
 print('\t数据文件,可以是股票期货、外汇黄金、数字货币等交易数据')  
 print('\t格式为：标准OHLC格式，可以是日线、分时数据。')  
 #t0str,t9str='2015-01-01','2018-12-31'
-t0str,t9str='2018-01-01','2018-12-31'
+t0str,t9str='2018-01-01','2020-12-31'
 data=bt.feeds.PandasData(dataname=get_code_data(xcod,t0str,t9str))
 
 #
@@ -277,12 +277,14 @@ xret, xpos, xtran, gross_lev = xpyf.get_pf_items()
 
 #
 #xret=to_series(to_utc(xret))
+
+# 时区转换，默认是美国东部时间，
 xret=to_utc(xret)
 xpos=to_utc(xpos)
 xtran=to_utc(xtran)
-#print('\n@xret',xret);#print('xx',type(xret))
-#print('\n@xpos',xpos);#print('xx',type(xpos))
-#print('\n@xtran',xtran);#print('xx',type(xtran))
+print('\n@xret',xret);#print('xx',type(xret))
+print('\n@xpos',xpos);#print('xx',type(xpos))
+print('\n@xtran',xtran);#print('xx',type(xtran))
 #xxx
 #
 
@@ -304,9 +306,9 @@ pf.create_full_tear_sheet(xret
 #
 
 print('\n#9,绘制BT量化分析图形')
-cerebro.plot(iplot=False)
+# cerebro.plot(iplot=False)
 
-#plt.show()
+# plt.show()
 #---------
 #
 #---------

@@ -13,6 +13,9 @@ QQ群: Top极宽量化总群，124134140
 
 #
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 #
 import os,time,arrow,math,random,pytz
@@ -22,8 +25,7 @@ import backtrader as bt
 from backtrader.analyzers import SQN, AnnualReturn, TimeReturn, SharpeRatio,TradeAnalyzer
 
 #
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):
@@ -158,7 +160,7 @@ dcash0=cerebro.broker.startingcash
 #
 print('\n\t#2-2,设置数据文件，数据文件，需要按时间字段，正序排序')
 rs0='data/stk/'
-xcod='002046'
+xcod='002192'
 fdat=rs0+xcod+'.csv'
 print('\t@数据文件名：',fdat)
 
@@ -166,7 +168,7 @@ print('\t@数据文件名：',fdat)
 print('\t设置数据BT回溯运算：起始时间、结束时间')  
 print('\t数据文件,可以是股票期货、外汇黄金、数字货币等交易数据')  
 print('\t格式为：标准OHLC格式，可以是日线、分时数据。')  
-t0str,t9str='2017-01-01','2018-12-31'
+t0str,t9str='2019-01-01','2020-12-31'
 data=bt.feeds.PandasData(dataname=get_code_data(xcod,t0str,t9str))
 
 #

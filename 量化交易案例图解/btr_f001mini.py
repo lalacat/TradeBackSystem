@@ -14,6 +14,10 @@ QQ群: Top极宽量化总群，124134140
 #
 
 import sys;
+
+from 量化交易案例图解.topqt import topquant2019 as tq
+from 量化交易案例图解.topqt import topq_edu2019 as tqedu
+
 sys.path.append("topqt/")
 #
 
@@ -25,8 +29,7 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-import topquant2019 as tq
-import topq_edu2019 as tqedu
+
 #   
 #----------------------
 #
@@ -37,6 +40,7 @@ baslst=['000001']  #上证
 tim0str,tim9str='2018-01-01','2018-12-31'
 #
 qx=tq.tq_init('TQ01')
+
 #
 tq.pools_get4flst(qx,rsyb0,syblst,tim0str,tim9str,fgInx=False)
 tq.pools_get4flst(qx,rbas0,baslst,tim0str,tim9str,fgInx=True)

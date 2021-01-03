@@ -11,6 +11,9 @@ QQ群: Top极宽量化总群，124134140
 
 '''
 import sys;
+
+from zsxq.database.base import get_code_data
+
 sys.path.append("topqt/")
 #
 import matplotlib as mpl
@@ -22,11 +25,11 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-from backtrader.analyzers import SQN, AnnualReturn, TimeReturn, SharpeRatio,TradeAnalyzer
+from backtrader.analyzers import SQN, AnnualReturn, TimeReturn, SharpeRatio, TradeAnalyzer, PositionsValue
+
 
 #
-import topquant2019 as tq
-#   
+#
 #----------------------
 # 创建一个：最简单的MA均线策略类class
 class TQSta001(bt.Strategy):
@@ -169,7 +172,7 @@ print('\t@数据文件名：',fdat)
 print('\t设置数据BT回溯运算：起始时间、结束时间')  
 print('\t数据文件,可以是股票期货、外汇黄金、数字货币等交易数据')  
 print('\t格式为：标准OHLC格式，可以是日线、分时数据。')  
-t0str,t9str='2018-01-01','2018-12-31'
+t0str,t9str='2017-01-01','2019-12-31'
 data=bt.feeds.PandasData(dataname=get_code_data(xcod,t0str,t9str))
 
 #
@@ -185,11 +188,12 @@ print('\n\t#2-4,添加broker经纪人佣金，默认为：千一')
 cerebro.broker.setcommission(commission=0.001)
 #
 print('\n\t#2-5,设置每手交易数目为：10，不在使用默认值，默认是：1手')
-cerebro.addsizer(bt.sizers.FixedSize, stake=10)
+cerebro.addsizer(bt.sizers.FixedSize, stake=100)
 
 print('\n\t#2-5,设置addanalyzer分析参数')
-      
-cerebro.addanalyzer(SQN)
+
+cerebro.addanalyzer(PositionsValue,_name='PV')
+cerebro.addanalyzer(SQN,_name='SQM')
 #
 cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name = 'SharpeRatio', legacyannual=True)
 cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name='AnnualReturn')
@@ -218,6 +222,11 @@ print('\tROI投资回报率 Return on investment: %.2f %%' % kret)
 print('\n#8,analyzer分析BT量化回测数据')
 strat =results[0]
 anzs=strat.analyzers
+
+# 持仓变化
+print(anzs.PV.get_analysis())
+# SQN
+print(anzs.SQM.get_analysis())
 #
 dsharp=anzs.SharpeRatio.get_analysis()['sharperatio']
 trade_info=anzs.TradeAnalyzer.get_analysis()

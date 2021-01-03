@@ -22,7 +22,6 @@ import os,time,arrow,math,random,pytz
 import datetime  as dt
 #
 import backtrader as bt
-import topquant2019 as tq
 
 #   
 #----------------------

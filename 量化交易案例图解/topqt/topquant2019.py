@@ -28,7 +28,7 @@ from functools import reduce #py3
 import itertools
 import collections
 #
-import cpuinfo as cpu
+# import cpuinfo as cpu
 import psutil as psu
 from functools import wraps
 import datetime  as dt
