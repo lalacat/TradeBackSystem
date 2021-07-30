@@ -228,7 +228,8 @@ path3 = r'X:\股票\君临计划-医药.xlsx'
 paths = [
     path1,
     path2,
-    path3]
+    path3
+]
 JL = JunLinPlan()
 for p in paths :
     JL.run(p)

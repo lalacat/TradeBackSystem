@@ -12,7 +12,7 @@ from zsxq.database.base import sql_engine, ts_pro,ts
 
 token = 'f6b511d8d4529f19319e1861edadda749e64a5b8573102deec80cfd8'
 db_name = 'stock_data.db'
-starttime = '20201201'
+starttime = '20210201'
 endtime = ''  # endtime默认是最近的一个交易日，若未自定请保持''，引号内无空格
 
 
